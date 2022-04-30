@@ -517,6 +517,11 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
 
   uop.exception := xcpt_valid
   uop.exc_cause := xcpt_cause
+  
+  //-------------------------------------------------------------
+  val setEvent = (cs.uopc === uopADDI) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val getEvent = setEvent && (inst(31, 29) =/= 0.U)
+  uop.setEvent := setEvent
 
   //-------------------------------------------------------------
 
@@ -527,7 +532,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   // x-registers placed in 0-31, f-registers placed in 32-63.
   // This allows us to straight-up compare register specifiers and not need to
   // verify the rtypes (e.g., bypassing in rename).
-  uop.ldst       := inst(RD_MSB,RD_LSB)
+  uop.ldst       := Mux(getEvent, inst(RS1_MSB,RS1_LSB), inst(RD_MSB,RD_LSB))
   uop.lrs1       := inst(RS1_MSB,RS1_LSB)
   uop.lrs2       := inst(RS2_MSB,RS2_LSB)
   uop.lrs3       := inst(RS3_MSB,RS3_LSB)
@@ -566,7 +571,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   uop.is_fence   := cs.is_fence
   uop.is_fencei  := cs.is_fencei
   uop.is_sys_pc2epc   := cs.is_sys_pc2epc
-  uop.is_unique  := cs.inst_unique
+  uop.is_unique  := cs.inst_unique || setEvent
   uop.flush_on_commit := cs.flush_on_commit || (csr_en && !csr_ren && io.csr_decode.write_flush)
 
   uop.bypassable   := cs.bypassable

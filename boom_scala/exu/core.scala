@@ -365,6 +365,15 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
         "Using VM?             : " + usingVM.toString) + "\n")
 
   //-------------------------------------------------------------
+  // process event register
+  val procTag = RegInit(0.U(32.W))
+  val exitFuncAddr = RegInit(0.U(vaddrBitsExtended.W))
+  val procMaxInsts = RegInit(0.U(64.W))
+  val procRunningInsts = RegInit(0.U(64.W))
+  val overflow_insts = csr.io.status.prv === 0.U && procTag === 0x1234567.U && (procMaxInsts =/= 0.U) && (procRunningInsts > procMaxInsts)
+
+
+  //-------------------------------------------------------------
   //-------------------------------------------------------------
   // **** Fetch Stage/Frontend ****
   //-------------------------------------------------------------
@@ -402,9 +411,17 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     new_ghist.ras_idx := io.ifu.get_pc(0).entry.ras_idx
     io.ifu.redirect_ghist := new_ghist
     when (FlushTypes.useCsrEvec(flush_typ)) {
-      io.ifu.redirect_pc  := Mux(flush_typ === FlushTypes.eret,
-                                 RegNext(RegNext(csr.io.evec)),
-                                 csr.io.evec)
+      when (overflow_insts && exitFuncAddr =/= 0.U ) {
+        io.ifu.redirect_pc  := exitFuncAddr
+        procTag := 0.U
+        procMaxInsts := 0.U
+
+        printf("overflow redirect, target pc: 0x%x\n", exitFuncAddr)
+      }
+      .otherwise {
+        io.ifu.redirect_pc  := Mux(flush_typ === FlushTypes.eret, RegNext(RegNext(csr.io.evec)), csr.io.evec)
+      }
+
     } .otherwise {
       val flush_pc = (AlignPCToBoundary(io.ifu.get_pc(0).pc, icBlockBytes)
                       + RegNext(rob.io.flush.bits.pc_lob)
@@ -508,7 +525,12 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     decode_units(w).io.interrupt_cause := csr.io.interrupt_cause
 
     dec_uops(w) := decode_units(w).io.deq.uop
-  }
+
+    when (overflow_insts) {
+      dec_uops(w).exception := true.B
+      dec_uops(w).exc_cause := (Causes.illegal_instruction).U
+    }
+  }  
 
   //-------------------------------------------------------------
   // FTQ GetPC Port Arbitration
@@ -1002,7 +1024,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   // Extra I/O
   // Delay retire/exception 1 cycle
   csr.io.retire    := RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
-  csr.io.exception := RegNext(rob.io.com_xcpt.valid)
+  csr.io.exception := RegNext(rob.io.com_xcpt.valid && !(overflow_insts && (exitFuncAddr =/= 0.U)))
   // csr.io.pc used for setting EPC during exception or CSR.io.trace.
 
   csr.io.pc        := (boom.util.AlignPCToBoundary(io.ifu.get_pc(0).com_pc, icBlockBytes)
@@ -1011,6 +1033,13 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   // Cause not valid for for CALL or BREAKPOINTs (CSRFile will override it).
   csr.io.cause     := RegNext(rob.io.com_xcpt.bits.cause)
   csr.io.ungated_clock := clock
+
+  //chw: update execution insts
+  when (csr.io.status.prv === 0.U && procTag === 0x1234567.U && procMaxInsts =/= 0.U) { //usemode
+    procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
+
+    printf("procRunningInsts: %d\n", procRunningInsts)
+  }
 
   val tval_valid = csr.io.exception &&
     csr.io.cause.isOneOf(
@@ -1079,6 +1108,24 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
           bypass_idx += 1
         }
       }
+
+      val rrd_uop = iregister_read.io.exe_reqs(iss_idx).bits.uop
+
+      when (rrd_uop.setEvent && rrd_uop.ldst === 0.U ) {
+        val tag = rrd_uop.inst(31, 20)
+        val rs1_data = iregister_read.io.exe_reqs(iss_idx).bits.rs1_data
+        switch (tag){
+          is (SetEvent_ProcTag)      { procTag := rs1_data(31, 0) }
+          is (SetEvent_ExitFuncAddr) { exitFuncAddr := rs1_data }
+          is (SetEvent_ProcMaxInsts) { 
+            procMaxInsts := rs1_data 
+            procRunningInsts := 0.U 
+          }
+        }
+        printf("csr.io.status.prv: %d\n", csr.io.status.prv)
+        printf("setEvent, pc: 0x%x, inst: 0x%x, tag: %d, data: 0x%x\n", rrd_uop.debug_pc, rrd_uop.inst, tag, rs1_data)
+      }
+
       iss_idx += 1
     }
   }
@@ -1152,6 +1199,14 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
         iregfile.io.write_ports(w_cnt).bits.data := Mux(wbReadsCSR, csr.io.rw.rdata, wbdata)
       } else {
         iregfile.io.write_ports(w_cnt).bits.data := wbdata
+      }
+
+      when (wbresp.bits.uop.setEvent && wbresp.bits.uop.ldst =/= 0.U ) {
+        val tag = wbresp.bits.uop.inst(31, 20)
+        switch (tag) {
+          is (ReadEvent_ProcTag)   { iregfile.io.write_ports(w_cnt).bits.data := Cat(0.U(32.W), procTag) }
+        }
+         printf("getEvent, pc: 0x%x, inst: 0x%x, tag: %d, ldst: %d, data: 0x%x\n", wbresp.bits.uop.debug_pc, wbresp.bits.uop.inst, tag, wbresp.bits.uop.ldst, procTag)
       }
 
       assert (!wbIsValid(RT_FLT), "[fppipeline] An FP writeback is being attempted to the Int Regfile.")
