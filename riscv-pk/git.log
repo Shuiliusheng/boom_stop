@@ -1,0 +1,3675 @@
+commit a3e4ac61d2b1ff37a22b9193b85d3b94273e80cb
+Merge: bf64bb8 fafaedd
+Author: Palmer Dabbelt <palmer@sifive.com>
+Date:   Wed Aug 14 18:57:39 2019 -0700
+
+    Merge pull request #172 from riscv/version
+    
+    Mark PK as version 1.0.0
+
+commit fafaedd2825054222ce2874bf4a90164b5b071d4
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Aug 14 18:44:36 2019 -0700
+
+    Mark PK as version 1.0.0
+    
+    Why not?
+    
+    Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
+
+commit bf64bb8ee9e43e7f6271509fa2e71b8be6cf23bc
+Merge: bc94419 d1ca3b9
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Aug 14 09:00:04 2019 -0700
+
+    Merge pull request #171 from ipatix/master
+    
+    allow additional ns16550a config via device tree
+
+commit d1ca3b9ebee9c6f3fe447e6ea00816f655678519
+Author: Michael Panzlaff <michael.panzlaff@fau.de>
+Date:   Mon Aug 12 15:48:18 2019 +0200
+
+    allow additional ns16550a config via device tree
+    
+    This commit makes bbl read some additional fields from
+    the device tree if it detects an ns16550a:
+    
+    - reg-shift
+    - reg-offset
+    - clock-frequency
+    
+    For explanation of these check out the Linux Kernel doc:
+    https://www.kernel.org/doc/Documentation/devicetree/bindings/serial/8250.txt
+    
+    In particular this allows the Xilinx AXI UART 16550 to act
+    as serial console with bbl and the Linux early boot console.
+    
+    This also fixes a bug in which bbl will ignore any other than the first
+    "compatible" string when iterating over the nodes.
+    Previously this line would not have worked:
+    
+    compatible = "xlnx,xps-uart16550-2.00.a", "ns16550a";
+    
+    Before bbl would have just checked the first field instead of checking
+    all strings in the list.
+
+commit bc944193381840386a00ec37a5c44908c8f16689
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Aug 12 02:33:31 2019 -0700
+
+    Prevent memset from calling itself
+    
+    With -ftree-loop-distribute-patterns, GCC detects that the body of memset
+    is equivalent to memset, and so turns it into a call to memset, causing
+    infinite recursion.
+    
+    Closes #170.
+
+commit 0694b85892b49a80eedbe5ac0b558f5a463058a5
+Merge: d5909ee 31878c5
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Jul 17 17:08:17 2019 -0700
+
+    Merge pull request #168 from riscv/fix-code-above-4g
+    
+    Fix bbl/pk living above 4 GiB
+
+commit 31878c5e2f7a989977ef3f64da48e14387bbe0a2
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Jul 17 16:36:51 2019 -0700
+
+    Make illegal-instruction jump table entries relative to their base
+    
+    This supports bbl living above 4 GiB.
+
+commit 3d681ed0d01df2fa65f15df86e06b63a7a696d1f
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Jul 17 16:36:16 2019 -0700
+
+    Use pointer-sized entries in trap table
+    
+    This allows bbl to be loaded above 4 GiB on RV64.
+
+commit d5909ee6f6c41ac0c539b687fb6e849401b0aecc
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Fri Jul 5 18:05:51 2019 -0700
+
+    Report correct scause when faulting while fetching emulated instruction
+
+commit 46cd5082c5d324bb843be35d8130aa9d44068d7d
+Merge: cb253a3 ff71b88
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Jun 11 17:37:24 2019 +0200
+
+    Merge pull request #163 from gsomlo/gls-litex
+    
+    Building BBL for the LiteX/Rocket SoC
+
+commit ff71b88278db63ff22b7f39d38bd952dea34f2a1
+Author: Gabriel L. Somlo <gsomlo@gmail.com>
+Date:   Tue Jun 11 10:46:49 2019 -0400
+
+    configure: Add option to set physical memory start address
+    
+    For systems where physical memory is mapped to a start address
+    different from 0x80000000, allow the default to be overridden
+    using the --with-mem-start argument to the configure script.
+    
+    Signed-off-by: Gabriel Somlo <gsomlo@gmail.com>
+
+commit 9c20a7744f7ad070094af0c1c29346fcfec50829
+Author: Gabriel L. Somlo <gsomlo@gmail.com>
+Date:   Tue Jun 11 10:51:01 2019 -0400
+
+    Check for 'U' extension before accessing 'mcounteren' CSR
+    
+    On 64-bit Rocket with 'DefaultFPGAConfig' (using 'WithNSmallCores'),
+    the 'U' extension is not supported, and accessing 'mcounteren' would
+    trigger an 'Illegal Instruction' trap.
+    
+    Signed-off-by: Gabriel Somlo <gsomlo@gmail.com>
+
+commit cb253a3f970b373df4390a0e7a17610556f920f3
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu May 9 11:58:15 2019 -0700
+
+    Allow up to 2 KiB of arguments
+    
+    Closes #161
+
+commit 9239d63942b92c3568ebda26258e49d2acacd229
+Author: maxice8 <30738253+maxice8@users.noreply.github.com>
+Date:   Mon Apr 15 14:32:38 2019 -0300
+
+    bbl/bbl.ac: use = instead of == for comparing equality (#158)
+    
+    == is not defined in POSIX and will fail when configure
+    is called with shells that adhere strictly to POSIX like
+    dash
+
+commit 9b72a65d59d17b2ae42318fdcd42882ca9aab3c9
+Author: maxice8 <30738253+maxice8@users.noreply.github.com>
+Date:   Mon Apr 15 01:17:03 2019 -0300
+
+    configure.ac: use = instead of == to check for equality (#157)
+    
+    == is not specified by POSIX and will fail if a POSIX shell is called
+    which is done by the configure script.
+    
+    Related to: https://github.com/void-linux/void-packages/issues/10949
+
+commit 723aa2249a0a909b88ce2d48c7e6b2e36bf630fc
+Author: ak-fau <ak-fau@users.noreply.github.com>
+Date:   Sun Apr 14 14:26:17 2019 +0200
+
+    Update configure option for 32-bit (#156)
+    
+    configure script does not support --enable-32bit option since June 2018
+    (commit c3cf29a8f2f5f6a0b793bd1f24b083a759370a01). The right step
+    to enable 32-bit support in pk is to provide '--with-arch=rv32i' option to
+    configure.
+
+commit 97b683ed3cbeeb059e5ad3de8f884db734447d56
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Mar 24 23:08:10 2019 -0700
+
+    Fix build with newer newlib
+
+commit a1c125dde740f5acd1e20a341cf3426ea44af292
+Author: Luís Marques <luis@luismarques.eu>
+Date:   Thu Feb 28 22:00:47 2019 +0000
+
+    Stub out madvise syscall (#145)
+
+commit a26a565cb89b9292e400363fe00e75f3eb4cf99c
+Merge: e2e2e9d 2433bbd
+Author: Andrew Waterman <aswaterman@gmail.com>
+Date:   Mon Feb 4 11:21:23 2019 -0800
+
+    Merge pull request #143 from hakrdinesh/master
+    
+    openbsd related adjustments
+
+commit 2433bbd4a6ae021ebe1aae1fd47a6ee121806cb9
+Author: Dinesh Thirumurthy <hakrdinesh@users.noreply.github.com>
+Date:   Mon Feb 4 09:50:01 2019 +0530
+
+    openbsd build steps
+
+commit c0712db954d83ee2e6803a640a344bbc0103b9be
+Author: Dinesh Thirumurthy <dinesh.thirumurthy@gmail.com>
+Date:   Mon Feb 4 15:02:04 2019 +0530
+
+    openbsd has bash in /usr/local/bin
+
+commit e2e2e9db2e9ffec74542597ffe8fc856ec98155d
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Fri Jan 25 17:00:08 2019 -0800
+
+    Protect BBL data, not just text
+    
+    h/t @michaeljclark
+
+commit 66c13fd4a9c1c2eda51df35ddc13e095469faec7
+Author: Andrew Waterman <aswaterman@gmail.com>
+Date:   Tue Jan 15 11:31:27 2019 -0800
+
+    Revert "Don't require a RISC-V libc and crt when configuring (#132)" (#140)
+    
+    This reverts commit a02257a861a4d13f31868a27c197cfc5576101e1.
+
+commit a02257a861a4d13f31868a27c197cfc5576101e1
+Author: James Clarke <jrtc27@jrtc27.com>
+Date:   Sat Jan 5 02:09:36 2019 +0000
+
+    Don't require a RISC-V libc and crt when configuring (#132)
+
+commit 31e531b2b4afe8ec5e08d700727afdbbbe45bf34
+Author: Luís Marques <luis@luismarques.eu>
+Date:   Sat Jan 5 02:08:06 2019 +0000
+
+    Implement clock_gettime syscall (#139)
+
+commit cb28d01e1dc80ff9a0c599105bc4e97fdc5274e3
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Dec 19 15:00:27 2018 -0800
+
+    Protect M-mode memory from S-mode
+
+commit 815050f0b2bff48d336629132f68b8779b3c9267
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Dec 19 14:57:20 2018 -0800
+
+    Set up PMP earlier, so it can be overridden later
+
+commit dca89b7e453732931f3c28c0ff91634c7c235b3f
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Dec 19 14:56:21 2018 -0800
+
+    Page-align the writable data section
+    
+    For eventual PMP purposes
+
+commit 474d787f1b290acd16c2c27071d15afe98aaa196
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Dec 19 12:59:01 2018 -0800
+
+    Clean up linker scripts a bit
+
+commit 92434c4f697564929f2ceb724bc82d3b6bc58879
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Dec 2 17:14:16 2018 -0800
+
+    Delegate misaligned AMOs as access exceptions, not misaligned
+    
+    This indicates the access is actually invalid, i.e., should not
+    be emulated.
+
+commit f579c48e909acf34c053a15ff1e79f82024a28bb
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Dec 2 17:11:49 2018 -0800
+
+    Revert "Avoid writing reserved values to pmpaddr CSR"
+    
+    This reverts commit 7bee30c1ff56975041ffc67cd0170d7477aba865.
+    
+    All ones is no longer "reserved", so the old code is OK.
+
+commit e12593841af47b6b15c7de63804342ef87f271ce
+Merge: 6ebd0f2 23de87d
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Nov 21 07:39:06 2018 -0800
+
+    Merge pull request #134 from lsgunth/ie_words_fix
+    
+    Fix the calculation for the number of interrupt enable words
+
+commit 23de87d808c615dc47620876a7daa112994bf948
+Author: Logan Gunthorpe <logang@deltatee.com>
+Date:   Tue Nov 20 16:36:10 2018 -0700
+
+    Fix the calculation for the number of interrupt enable words
+    
+    The number of interrupt enable words should be the number of devices
+    divided by the number of bits per word (not the number of bytes per
+    word) and it should round up.
+    
+    Without this fix, when using a larger number of interrupts,
+    the user will see a number of errors in qemu of the form:
+    
+       plic: invalid register write: %08x
+    
+    Signed-off-by: Logan Gunthorpe <logang@deltatee.com>
+
+commit 6ebd0f2a46255d0c76dad3c05b16c1d154795d26
+Merge: 7bee30c 00f0dd0
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Nov 7 08:19:24 2018 -0800
+
+    Merge pull request #114 from zongbox/mabi
+    
+    Fix stubs-lp64.h/stubs-lp64d.h/stubs-ilp32.h/stubs-ilp32d.h not found
+
+commit 7bee30c1ff56975041ffc67cd0170d7477aba865
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Sep 23 20:48:21 2018 -0700
+
+    Avoid writing reserved values to pmpaddr CSR
+
+commit ac2c910b18c3e36cfd85080472e78ad2fe484325
+Author: Michael Clark <mjc@sifive.com>
+Date:   Sun Sep 16 19:57:43 2018 +1200
+
+    Fix git-submodule fatal error for berkeley-softfloat-3
+    
+    A portend from git-submodule:
+    
+    $ git submodule update --init --recursive
+    fatal: No url found for submodule path 'softfloat/berkeley-softfloat-3' in .gitmodules
+
+commit 55261c0b487003a60a4654075314d704f3675e8f
+Author: Michael Clark <mjc@sifive.com>
+Date:   Sun Sep 16 19:51:32 2018 +1200
+
+    Add softfloat/README.md detailing source
+
+commit 706cc77c369fd3e4734b5a6aa813d421347f1814
+Author: Andrew Waterman <aswaterman@gmail.com>
+Date:   Wed Aug 15 02:46:11 2018 -0700
+
+    Fix printm on RV32 (#119)
+    
+    Use a proxy syscall instead of a blocking character write.
+    
+    Resolves #84
+
+commit 41ff94a84c6bc7ada906a38a250f4d175d796d92
+Author: wxjstz <wxjstz@126.com>
+Date:   Tue Aug 7 03:09:06 2018 +0800
+
+    Add some exception handling functions to s-mode to handle exception return from m-mode. (#117)
+
+commit d64dfb3d17c82ba1a95cdc7e31fd14ae4d27587c
+Merge: 537ae11 165c85c
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Aug 3 13:37:00 2018 -0700
+
+    Merge pull request #104 from heshamelmatary/disable_vm
+    
+    bbl: boot payload in machine mode on --enable-boot-machine
+
+commit 00f0dd04cbdb670f7e81d7fe5c686cb49e7cd182
+Author: Zong Li <zong@andestech.com>
+Date:   Thu Jul 26 18:01:00 2018 +0800
+
+    Fix stubs-lp64.h/stubs-lp64d.h/stubs-ilp32.h/stubs-ilp32d.h not found
+    
+    For now, we always compile files with -mabi option by using
+    soft-fp ABI. But there are some files use the header which in
+    toolchain, like unistd.h, stdint.h and so on. Finally, these
+    header files include other header files which existing depend
+    on ABI such as stubs-lp64.h or stubs-lp64d.h. So it causes the
+    header file not found when using the double-float toolchain with
+    soft-float ABI.
+    
+    Fix up by compiling files with -march and -mabi options only if
+    there is specifying the --with-arch option at configure time.
+    
+    If use the --with-arch option at configure time, that means your
+    toolchain has multi-lib support, so always building riscv-pk
+    by soft-float ABI is fine. Otherwise, we don't compile files with
+    specifying march and mabi options explicitly
+
+commit 165c85caeec4f2558c3981c4221573426acd58dc
+Author: Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+Date:   Thu Jul 12 11:05:57 2018 +0100
+
+    minit: Move pmp setup code to a separate function to avoid duplicating code
+    
+    Currently it's being used by both enter_supervisor_mode and enter_machine_mode
+
+commit 72672f9a393e10e5444f733cba287a9744cd4033
+Author: Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+Date:   Mon May 14 17:11:33 2018 +0100
+
+    bbl: boot payload in machine mode when --enable-boot-machine is passed
+
+commit 2d85b4c38e216f8e9ceea595b87a999f2bf5d9df
+Author: Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+Date:   Mon May 14 16:56:21 2018 +0100
+
+    configure: Add --enable-boot-machine in BBL
+    
+    If --enable-boot-machine is passed, BBL disables VM and runs the payload in machine mode.
+    This is useful for payloads (e.g. RTOSes or other OSes) that want to run
+    only in machine mode while still relying on bbl/pk for system calls and emulation
+
+commit 537ae11ae506b6fa6c4dd9dc37c9cc818af84027
+Merge: 6324129 5cd8d2b
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Jul 11 01:31:05 2018 -0700
+
+    Merge pull request #113 from riscv/license
+    
+    Upgrade SoftFloat
+
+commit 63241292c9f4aa0e36d6f5482b6e378a48256002
+Merge: 3434bc1 b714040
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Jul 11 01:28:03 2018 -0700
+
+    Merge pull request #91 from bukinr/master
+    
+    Include .bss section to the binary so dtb_output() gets full size of payload
+
+commit 3434bc18aa962b69934b68cf811ba00908a50ca9
+Merge: 16476bd 9ecbd23
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Jul 11 01:24:04 2018 -0700
+
+    Merge pull request #103 from zongbox/comment
+    
+    Correct the comment of timer interrupt
+
+commit 5cd8d2b93fad2011fdf8f49a263d77697af35b32
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Jul 11 01:16:28 2018 -0700
+
+    Upgrade to SoftFloat 3e
+
+commit 8e69141749065ff957383d2112768f95a33429b6
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Jul 10 16:45:18 2018 -0700
+
+    Fix license on f32_classify and f64_classify (I wrote them)
+
+commit 386b9337e2896956ac52f2a5a304c127f5a4c5d0
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Jul 10 16:32:36 2018 -0700
+
+    Don't look for riscv_logo.txt if logo is not enabled
+
+commit 241ce51583b613774c0c9a8aa3ab2d67bc445e09
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Jul 10 15:54:49 2018 -0700
+
+    License my ASCII RISC-V logo
+
+commit 16476bd8219f58417a401ea0a720d9588d1d8ebc
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Jul 9 15:46:24 2018 -0700
+
+    Properly license all nontrivial files
+
+commit 600ff370c65ba99d2103a050a1847671cc0bd9c9
+Merge: 2cffbf5 c3cf29a
+Author: Kito Cheng <kito.cheng@gmail.com>
+Date:   Thu Jun 21 17:44:25 2018 +0800
+
+    Merge pull request #102 from zongbox/m32-v2
+    
+    Replace the --enable-32bit option by --with-arch
+
+commit c3cf29a8f2f5f6a0b793bd1f24b083a759370a01
+Author: Zong Li <zong@andestech.com>
+Date:   Tue May 1 10:58:34 2018 +0800
+
+    Replace the --enable-32bit option by --with-arch
+    
+    Get rid of the --enable-32bit option and switch to use --with-arch,
+    which is more standard because it matches the GCC build.
+    
+    If --with-arch is not specified, it defaults to whatever the
+    compiler's default is.
+    
+    The --with-abi is not necessary for this project.
+    Unconditionally compile it with a no-float ABI.
+
+commit 2cffbf5d8efd9822dbac98e2fde89adba871d4b0
+Author: Zong Li <zongbox@gmail.com>
+Date:   Thu Jun 21 14:39:41 2018 +0800
+
+    Fix problem of casting u64 to void* on 32-bit environment (#111)
+    
+    Can't cast to pointer from 64 bit size integer directly on 32 bit
+    environment.
+
+commit 10bf403ba8887e217bb1619efb92049c47ab8c01
+Merge: 9ffedde 474ee5a
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Tue May 22 16:09:00 2018 -0700
+
+    Merge pull request #107 from michaeljclark/fdt-firmware-only
+    
+    RISC-V: Support separate firmware and kernel payload
+
+commit 474ee5a81880dcf60789e7c2a3054b3afb34c3ca
+Author: Michael Clark <michaeljclark@mac.com>
+Date:   Mon May 21 13:29:31 2018 +1200
+
+    RISC-V: Support separate firmware and kernel payload
+    
+    Support for separate firmware and kernel payload is added
+    by updating BBL to read optional preloaded kernel address
+    attributes from device-tree using a similar mechanism to
+    that used to pass init ramdisk addresses to linux kernel.
+    
+        chosen {
+            riscv,kernel-start = <0x00000000 0x80200000>;
+            riscv,kernel-end = <0x00000000 0x80590634>;
+        };
+    
+    These attributes are added by QEMU and read by BBL when combining
+    -bios <firmware-image> and -kernel <kernel-image> options. e.g.
+    
+    $ qemu-system-riscv64 -machine virt -bios bbl -kernel vmlinux
+    
+    With this change, bbl can be compiled without --with-payload
+    and the dummy payload alignment is altered to make the memory
+    footprint of the firmware-only bbl smaller. The dummy payload
+    message is updated to indicate the alternative load method.
+    
+    This load method could also be supported by a first stage boot
+    loader that reads seperate firmware and kernel from SPI flash.
+    The main advantage of this new mechanism is that it eases kernel
+    development by avoiding the riscv-pk packaging step after kernel
+    builds, makes building per repository artefacts for CI simpler,
+    and mimics bootloaders on other platforms that can load a kernel
+    image file directly. Ultimately BBL should use an SPI driver to
+    load the kernel image however this mechanism supports use cases
+    such such as QEMU's -bios, -kernel and -initrd options following
+    examples from other platforms that pass kernel entry to firmware
+    via device-tree.
+    
+    Cc: Palmer Dabbelt <palmer@sifive.com>
+    Cc: Alistair Francis <Alistair.Francis@wdc.com>
+    Signed-off-by: Michael Clark <mjc@sifive.com>
+
+commit 9ffedde3d747a9b6f559041cc69478df6d647135
+Author: Zihao Yu <19884013+sashimi-yzh@users.noreply.github.com>
+Date:   Tue May 22 02:16:01 2018 +0800
+
+    machine,minit: initialize emulated FCSR in enter_supervisor_mode() (#106)
+    
+    * If BBL emulates the FPU, the trap handler will load emulated FCSR from
+      x0's save slot into tp. The emulated FCSR should be initialized, else
+      the field of rounding mode will contain garbage codes. This will
+      lead to raising SIGABRT for a user mode program which tries to print a
+      floating point variable. In glibc, __printf_fp_l() (defined in
+      riscv-glibc/stdio-common/printf_fp.c) will call round_away() (defined
+      in riscv-glibc/include/rounding-mode.h). With a garbage rounding mode
+      in emulated FCSR, round_away() may call abort().
+
+commit 94bcafff6abe9d17e3f4d99680f0e6488c4acc15
+Author: Jim Straus <jstraus59@users.noreply.github.com>
+Date:   Tue May 15 15:39:02 2018 -0700
+
+    Fix for missing supervisor mode when running on E51 (#96)
+    
+    The E51 core on the U54-MC lacks supervisor mode, thus the plic_s_ie and plic_s_thresh are NULL when running on this core. This adds checks for this case.
+
+commit 9ecbd23d6205a7e18ba17a847d49d32993c97421
+Author: Zong Li <zong@andestech.com>
+Date:   Wed May 9 11:30:19 2018 +0800
+
+    Correct the comment of timer interrupt
+
+commit 9d0911092df8e9bd483edf495a9a780e5f0e660f
+Author: Zong Li <zongbox@gmail.com>
+Date:   Fri Apr 27 17:57:39 2018 +0800
+
+    Fix typo of perf counter (#100)
+
+commit f2aaee46b9c4ff7573bab35351cbaab6178b6395
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 24 14:01:16 2018 -0700
+
+    Enable FPU in PK, regardless of FPU presence
+    
+    Otherwise, the emulation code will refuse to emulate FP instructions.
+
+commit fd2ddce557a9085ccdba1a455eded4808e7466c6
+Author: Alex Solomatnikov <solomatnikov@users.noreply.github.com>
+Date:   Tue Apr 10 11:10:42 2018 -0700
+
+    SBI emulation of reads and writes to perf counters and config (#98)
+
+commit 8ff2222893d7a3d822131a5191e0b483bf56c610
+Author: Zong Li <zongbox@gmail.com>
+Date:   Tue Apr 10 11:37:14 2018 +0800
+
+    Fix the wrong access of ipi pending address (#99)
+    
+    The MENTRY_IPI_PENDING_OFFSET offset is based on stack pointer
+
+commit b71404096c0bb0045f81f3131a803af16fa0ef94
+Author: Ruslan Bukin <br@bsdpad.com>
+Date:   Fri Mar 23 15:11:22 2018 +0000
+
+    Include .bss section to the binary so dtb_output() gets full size
+    of payload, in result DTB will not overlap with bss and will not
+    be zeroed by OS
+
+commit dcd6ee0893f784320db857cb66f8424a1d154d8d
+Author: aurel32 <aurelien@aurel32.net>
+Date:   Wed Mar 21 23:43:43 2018 +0100
+
+    Fix build with compilers defaulting to PIE (#90)
+    
+    Debian toolchain defaults to PIE, and I guess that will also be the case
+    of most distributions. This cause bbl to be non-functional.
+    
+    This patch fixes that by adding -fno-PIE in the default CFLAGS.
+
+commit 5a0e3e55cab1d6f3462c77e852f16365c79f2c98
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Tue Mar 20 12:54:40 2018 -0700
+
+    minit: insert printm as work-around for a race condition
+    
+    Reboot does not work reliably without this.
+
+commit 5e6005587d0649b084bda1cebced02b24fef743d
+Author: Rishi Khan <rishikhan@users.noreply.github.com>
+Date:   Fri Mar 16 17:00:03 2018 -0400
+
+    Changed install_subdir to $host_alias with substituted 64->32 instead… (#89)
+    
+    * Changed install_subdir to $host_alias with substituted 64->32 instead of hardcoded riscv[32|64]-unknown-elf
+    
+    * Updated readme to reflect changes in install_subdir.
+
+commit 06d3afd772b73f1537c473e5591182f7efbecf83
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Mar 15 12:09:45 2018 -0700
+
+    Update config.guess/config.sub
+    
+    Closes #87
+
+commit 06a9e345f526d45c12ec79c5c01af0331b0c1757
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Mar 15 12:08:02 2018 -0700
+
+    Don't link build-id string
+    
+    Closes #88
+
+commit 2bbd8e1a1bccae13ec87882baf423abfc6ef76fd
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Mar 5 14:59:44 2018 -0800
+
+    mtrap: add a halt IPI used for poweroff (#86)
+    
+    Otherwise, linux complains the moment an interrupt arrives and
+    wakes up one of the not-looping cores.
+
+commit e5846a2bc707eaa58dc8ab6a8d20a090c6ee8570
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Feb 1 00:22:49 2018 -0800
+
+    Bump the Linux version PK claims to support
+    
+    This makes it more compatible with recent glibc.
+
+commit e2aad2d122103182276ea4b70888fa6d65b35568
+Merge: 2e03ddb e94752f
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Mon Jan 22 20:36:25 2018 -0800
+
+    Merge pull request #77 from riscv/mtrap-fix
+    
+    mtrap: loop forever, really
+
+commit e94752f4ee088b0905e6c4e1405cbb5da9aef368
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Jan 22 20:32:23 2018 -0800
+
+    mtrap: loop forever, really
+    
+    gcc sometimes takes liberties with optimizing away our important halt function!
+
+commit 2e03ddb03ab9a7ce416453d71923d4531e2f9fe6
+Merge: 3740bc5 21dbf5f
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Mon Jan 22 18:44:03 2018 -0800
+
+    Merge pull request #76 from riscv/race
+    
+    Boot on the first hart
+
+commit 21dbf5f307b694a82e41e85e300ddbb37b275139
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Mon Jan 22 14:45:22 2018 -0800
+
+    Boot on the first hart
+    
+    This code is broken, and it's left over from before we could read the
+    DTB to find harts to boot on.
+
+commit 3740bc51b3e3b526f9cfd7ae3dba7810b05d833d
+Author: Zong Li <zongbox@gmail.com>
+Date:   Tue Jan 9 21:10:20 2018 +0800
+
+    Remove the repeating bitmask of medeleg register (#74)
+
+commit 0ff33906ff8fe4252613e5735ba6e886fd27d9c1
+Merge: 8e46834 15ff218
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Sat Dec 16 18:11:28 2017 -0800
+
+    Merge pull request #73 from riscv/flush_icache
+    
+    Add __riscv_flush_icache
+
+commit 15ff218ec04c4d8aea4bdfafd9259f158978e402
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Dec 13 17:05:42 2017 -0800
+
+    Add __riscv_flush_icache
+    
+    For BBL's purposes a local i-cache flush should be sufficient.
+
+commit 8e4683478d16c42ac2a698112c80c09e8bb293d2
+Merge: 3d921d3 132c629
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Dec 13 12:32:38 2017 -0800
+
+    Merge pull request #72 from riscv/16550
+    
+    Add a 16550 UART driver to back the SBI console
+
+commit 132c6292bb3fc18e52a1e3a3a5cdd3b8ca838b28
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Tue Dec 12 19:04:56 2017 -0800
+
+    Add a 16550 UART driver to back the SBI console
+    
+    QEMU currently provides the console via HTIF and the SBI.  That's a bit
+    messy because BBL polls for serial input, which means that typing too
+    quickly loses characters.  While QEMU has a standard 16550 device model,
+    there's no way to have two consoles share the console in QEMU (as they'd
+    step all over each other) so that means we can't have both the HTIF
+    console and the 16550 console.
+    
+    With this patch, QEMU can be changed to use a 16650 instead of the HTIF
+    for serial output.  Linux will use the SBI for early printk support
+    (which is fine, polling for output is stable) and then swap over as soon
+    as it detects the UART.  When Linux swaps it prints out the whole
+    history, but there's probably a way to get around that.  There's a few
+    lines that are output to both, but it appears the Linux driver is close
+    enough to ours that nothing catastrophic happens -- there's not much to
+    the device, so hopefully that pans out on real hardware too.
+    
+    Once Linux swaps over to natively using the driver we get reliable
+    console input.  If you don't have the in-kernel driver then Linux never
+    swaps over and keeps using the SBI console just like before.
+
+commit 3d921d3c76db3af7b9ae0b5df0f0790f26222246
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Dec 12 00:38:34 2017 -0800
+
+    Bump encoding.h
+
+commit d05ff0d3e45195507cc7158fcdb25f442ab9e2ca
+Merge: 37a6894 e22aaec
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Nov 3 17:35:26 2017 -0700
+
+    Merge pull request #69 from riscv/endings
+    
+    Fix line endings in the logo
+
+commit e22aaec27f16d5f36f4a2947a7b6d4de8c922b38
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Nov 3 17:16:02 2017 -0700
+
+    Fix line endings in the logo
+
+commit 37a68944a44c99abef3f129be606c6d5f5f0dcc1
+Merge: 3815c61 455608b
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Nov 3 17:03:03 2017 -0700
+
+    Merge pull request #68 from riscv/no-platform
+    
+    Remove the platform interface
+
+commit 455608b465064eee862364796effeca91b4413f9
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Nov 3 17:02:06 2017 -0700
+
+    Allow users to pick a logo
+
+commit d1849cb5e3b8c714c2dae78bb15465f288707ac5
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Nov 3 16:30:35 2017 -0700
+
+    Remove the platform interface
+    
+    We now automatically detect everything that the platform interface used
+    to be used for, so it's now obsolete!
+
+commit 3815c611158f435d36121c2c433af664ad86d8ca
+Merge: 220b1be 2749801
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Nov 2 18:48:38 2017 -0700
+
+    Merge pull request #67 from riscv/dts2
+    
+    Detect harts that can't boot Linux instead of hard-coding them
+
+commit 27498013ad7684a5f22a99790ac29badea205a3f
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Nov 2 18:22:37 2017 -0700
+
+    Check if we have extensions before using them
+
+commit 21209988c72ee891727d5b9d548a224ae6958986
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Nov 2 18:02:09 2017 -0700
+
+    Initialize the UART first
+    
+    Without this I can't get printf to show me debug info during early boot.
+
+commit 9204785053e9a488b8990f9f98ff8f05c71fd0d5
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Nov 2 15:44:15 2017 -0700
+
+    Detect harts that can't boot Linux instead of hard-coding them
+    
+    This checks to see if a hart can't boot Linux by looking for a
+    compatible "mmu-type" field.  If the hart can't boot Linux, then bbl
+    masks it off.
+
+commit 220b1bee10d9399864131cd1dbe5037714237f03
+Author: Andrew Waterman <aswaterman@gmail.com>
+Date:   Wed Nov 1 01:13:45 2017 -0700
+
+    Fix(?) fcvt.s.w emulation for rs1 = -2^31 (#66)
+
+commit 18087efa98d77918d55127c3d7745cd6d6d9d77b
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Oct 23 23:38:41 2017 -0700
+
+    Make 4-byte aligned instruction-emulation loads atomic
+    
+    Per the Unix-class platform spec
+
+commit 4c64de3213e7a08e4097970b26a14ad835cabfab
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Oct 19 17:29:14 2017 -0700
+
+    Order __page_alloc before writing vmrs
+
+commit fb4e31229fb072297dad9fcdf2c67b053c5d0322
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Aug 29 15:12:52 2017 -0700
+
+    Stub out sys_prlimit64
+
+commit 3f20915effa623e11b139ba431841c7af2689cdd
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Aug 14 17:55:31 2017 -0700
+
+    finisher: support terminating sifive devices simulation (#61)
+
+commit 2dcae927fd6cc4493de0f77434a7f191157ba8b7
+Merge: 6b501de 147cfa6
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Aug 10 12:47:28 2017 -0700
+
+    Merge pull request #60 from riscv/hart1
+    
+    The DTB argument to boot_other_hart shouldn't be used in BBL
+
+commit 147cfa612b8a601ee7646da3bce5267e08c30bdc
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Aug 9 17:13:55 2017 -0700
+
+    The DTB argument to boot_other_hart shouldn't be used in BBL
+    
+    I screwed up refactoring bbl.
+
+commit 6b501de8e8512abd969199c57c5531737e52a105
+Merge: 2187c45 ca24f3c
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Sat Aug 5 15:53:27 2017 -0700
+
+    Merge pull request #59 from riscv/print-device-tree
+    
+    Add the '--enable-print-device-tree' argument
+
+commit ca24f3c904186cb6babfc74fd6c4e133e4542b5e
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Aug 3 14:39:23 2017 -0700
+
+    Add the '--enable-print-device-tree' argument
+    
+    I'm trying to debug some device tree problems while booting Linux and
+    figured it would be really nice to have access to the device tree while
+    trying to debug these problems.  I think this might be useful for lots
+    of people, so I went ahead and cleaned up the code enough that it should
+    actaully work in most cases.
+
+commit 2187c4512db64656896f4b455628a2567984eba1
+Merge: 57bb80f f0f8594
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Aug 3 08:46:13 2017 -0700
+
+    Merge pull request #58 from riscv/platform
+    
+    Add a platform interface
+
+commit f0f85949a006e201432031c8b5b1adb21eb22f4a
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Aug 3 08:45:08 2017 -0700
+
+    Allow platform__get_logo to return NULL
+
+commit 0d202e9dd4c8dd6c6aaba173a958bf29eeb7bcee
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Aug 2 10:42:45 2017 -0700
+
+    Add the '--with-platform' argument and the sifive-vc707-devkit platform
+    
+    Since we don't have a coherent platform specification right now, we've
+    ended up with slightly different platforms between spike and our FPGA
+    dev kit.  For now I've added an autoconf option that allows users to
+    select the relevant platform.
+
+commit 298984cbe6ffd7ab8507fa40e15199c7d5386aab
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Wed Aug 2 10:29:44 2017 -0700
+
+    Move DISABLED_HART_MASK to the platform
+    
+    Some platforms can't boot Linux on all the harts.  This commit allows
+    platforms to define the set of harts that should be prevented from
+    booting past BBL.  This is essentially just a new mechanism for defining
+    the DISABLED_HART_MASK.
+
+commit 62effc6bfe4f1a7e8a771c49966c4ab7755d6612
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Fri Jul 28 14:10:20 2017 -0700
+
+    Allow the platform to disable HTIF
+
+commit bb19fef663a5ce32d7e2d3557362a51da8d99365
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Jul 27 13:30:08 2017 -0700
+
+    Move the logo behind the platform interface
+    
+    SiFive has a different logo, so let platforms override said logo.
+
+commit 9037b1d9f2130770228be62c66b88b47fccd99b6
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Jul 27 13:23:49 2017 -0700
+
+    Add a platform interface
+    
+    SiFive's pk fork is the second one I've had to maintain, and it's a huge
+    pain because people keep just leaving changes all over the tree.  I want
+    to introduce an interface that the platform-specific details can live
+    behind so I don't have to keep doing these painful merges.
+
+commit 8b80f2ea28c0167f9dc75462147447b144ed4ea9
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Thu Jul 27 13:21:54 2017 -0700
+
+    Ignore some generated files
+
+commit 57bb80fb7df07b40295a70a5aca6e110ba4dcbb0
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Jul 17 15:02:31 2017 -0700
+
+    Fix emulation of misaligned RVC loads/stores
+    
+    We were accidentally advancing the PC by 4, not 2.
+
+commit 66701f82f88d08d3700d8b0bc5d5306abfd0044f
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu May 4 17:07:15 2017 -0700
+
+    FMV.X.S/FMV.S.X -> FMV.X.W/FMV.W.X
+
+commit 3aebe0db7f08f0aeed154be9c78ea872c66fb1ec
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sat Apr 29 15:07:47 2017 -0700
+
+    README.md: Explicitly list the requirement of a separate build directory.
+    
+    h/t Karsten Merker
+
+commit 5ca090ba6c467e1a4b3506fb16bd1406e835fcbc
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 18 13:04:39 2017 -0700
+
+    Use uint64_t, not uintptr_t, to represent FDT addresses/sizes
+    
+    This fixes RV32 pk.
+
+commit 770dcd9f1f468436292439eef53ff1888f1b8bad
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 18 10:40:21 2017 -0700
+
+    Fix RV32 compilation error
+
+commit 0f0ac647fe646529c51b5f5c68221502dc88d239
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 18 09:59:04 2017 -0700
+
+    Increase PK stack size to 3% of memory, up to 8 MiB
+
+commit 5f736b9ab82ad19e03fc720c63f08e01a72712cc
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 11 19:48:01 2017 -0700
+
+    Always write sbadaddr on trap redirection
+
+commit 3a3c1f5a1a797b8d054652c6a5eecc13699dee51
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 11 19:42:45 2017 -0700
+
+    Load instructions as unsigned values, not signed
+    
+    This matches the behavior of mbabaddr/mtval.
+
+commit 8197cad40c5af8e4e315429be9f20aefbcc803ee
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Thu Apr 6 10:48:46 2017 -0700
+
+    mtrap: allow override of DISABLED_HART_MASK from CFLAGS
+
+commit a2c8937e631f7531c3d59e4f179369f51eb44d19
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Apr 5 17:46:48 2017 -0700
+
+    Remove num_harts; use hart_mask exclusively
+
+commit dce2b7dd8ede804f54f54fafabd82b24c1a0be62
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Apr 5 17:39:58 2017 -0700
+
+    Rename HART_MASK to DISABLED_HART_MASK to clarify polarity
+
+commit 31eab7e4dd7856d48ee352fc941490257840a87c
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Wed Apr 5 17:42:26 2017 -0700
+
+    fdt: update the status length when masking cpus
+
+commit 8b4421bacba28f97da2ddeb6a6fba9e184e91bee
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Wed Apr 5 16:27:19 2017 -0700
+
+    bbl: prevent named cores from booting
+
+commit 91636ac4639a7993c485288d34f1c8e22b1980b4
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Wed Apr 5 16:22:47 2017 -0700
+
+    fdt: redact clint, plic, and debug hardware
+
+commit cd558016be4fdc99055814bd1adcfc2962b425c0
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Wed Apr 5 14:53:01 2017 -0700
+
+    fdt: support redaction
+
+commit d1200e3a54e9328d37833a4a155c6549c03a654f
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Apr 4 00:24:38 2017 -0700
+
+    Remove SBI console printm to speed up PK simulation
+
+commit 733fae9216f27b3d63c16f8608c3a5e2c6317afc
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Fri Mar 31 17:51:51 2017 -0700
+
+    clint: move hart wakeup till after all FDT parsing
+    
+    The clint was wiping out information discovered by the plic.
+    Initialize hart stacks as they are discovered.
+    Then fill in clint+plic info
+    Then wake the harts.
+
+commit 078ea399c6c1f2d6e8461559bf8cc1ba34ca89b6
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Mar 30 00:21:52 2017 -0700
+
+    New PMP encoding
+
+commit 52d46dd684ecb8c2fabda82b5246964d69dc867c
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Thu Mar 30 00:16:40 2017 -0700
+
+    fdt: look for the phandle of a cpu's nested interrupt controller
+
+commit 6f407a8d549620be5cfbdaa0b9fda967d633d736
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Mar 29 16:27:11 2017 -0700
+
+    Attempt to read instruction from mbadaddr
+
+commit 75f1854cd9d665dd6a7ed3bff7556b98e5a4a26c
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Mar 27 20:46:05 2017 -0700
+
+    plic: discovered via fdt
+
+commit b394a92597a5ee766dca42478e12492aba399543
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Mar 27 14:16:05 2017 -0700
+
+    uart: find it using fdt
+
+commit cfe60c100d103fc1547e1462522f08d8e6979e0c
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Mar 27 14:10:51 2017 -0700
+
+    fdt: rewrite parser using a single design pattern
+
+commit 9fa7b30887301f149f2497469a442d0887b21149
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Mon Mar 27 12:13:53 2017 -0700
+
+    uart: add physical device driver
+
+commit 3473915b3a3fd925a68fc3260c64824cab2846d2
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Mar 27 14:30:58 2017 -0700
+
+    Separate page faults from physical memory access exceptions
+
+commit 96e5ed750e7447f2c0316368e5592fd331ee345c
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Thu Mar 23 19:16:43 2017 -0700
+
+    bbl: copy dtb after the kernel
+
+commit 96965a8cc670d10055dbf64d42fedcda5b35beff
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Thu Mar 23 19:12:08 2017 -0700
+
+    pk: does not use dtb
+
+commit a1a5cbcacbbb43527fb6a4991ead1ae64cf18463
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Thu Mar 23 19:11:44 2017 -0700
+
+    fdt: add a size method
+
+commit fc1af65c1585b2a9ad1dd2cf1b50d552ee65c742
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Mar 23 12:55:40 2017 -0700
+
+    Set up PMPs, permissively for now
+
+commit 23ab37ad78673166a8300584d177ace77fca5101
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Wed Mar 22 14:35:13 2017 -0700
+
+    SBI: a0+a1 hold hartid+dtb pointer between boot loader stages
+
+commit 316f85e9ae2f5d9dd0b33d3649a8256db0dfd29b
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Tue Mar 21 21:44:49 2017 -0700
+
+    machine: add FDT parser
+
+commit db19d0d2785c50de38e5b0b1879c6c5a3793a5a3
+Author: Wesley W. Terpstra <wesley@sifive.com>
+Date:   Tue Mar 21 19:19:46 2017 -0700
+
+    machine: remove configstring
+
+commit 7d60c5904f45d979643c1b9f6cdde42f62ef3c32
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Mar 21 16:56:52 2017 -0700
+
+    Allow PK access to user memory
+
+commit cfc4554bc641214261089e03edc2450e9af027ac
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Thu Mar 16 14:36:55 2017 -0700
+
+    Simplify interrupt-stack discipline
+    
+    https://github.com/riscv/riscv-isa-manual/commit/f2ed45b1791bb602657adc2ea9ab5fc409c62542
+
+commit 36a5855d446efab2d122346c99e12b66183a2e9b
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Mar 8 02:13:48 2017 -0800
+
+    Don't rely on config string for basic functionality
+
+commit d203037851b05ed665ec98d8f6bf40dcd3984bbd
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sat Feb 25 15:32:51 2017 -0800
+
+    PPNs are 44 bits in RV64
+
+commit 410fb0384f0fac770ab89b675939790d9253bbf1
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sat Feb 25 15:32:40 2017 -0800
+
+    New counter-enable scheme
+    
+    https://github.com/riscv/riscv-isa-manual/issues/10
+
+commit 34979b93458d685df65a49bca3084eb8283439da
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Feb 22 20:31:28 2017 -0800
+
+    Fix PK boot
+
+commit f6bca6e35b66632afad68f6b7fb2b3203c8502fb
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Feb 20 21:43:09 2017 -0800
+
+    Don't block for acks on console writes
+
+commit 59484c94e161b0f1870096cfb183533b20569669
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Feb 20 19:05:55 2017 -0800
+
+    WIP on SBI
+
+commit 66fda264c796e7bcfe63282ae46c398d4a25c4d9
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Mon Feb 20 18:49:19 2017 -0800
+
+    minor HTIF cleanup + use WFI
+
+commit 7c4765029820580c0c01b3321fe4310c8416dcb6
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Feb 19 15:55:02 2017 -0800
+
+    Handle IPIs and timer interrupts more quickly
+
+commit b14d4187fe1a328b9e87f61a984fd70e17211954
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Fri Feb 17 01:54:52 2017 -0800
+
+    Clean up boot loader for physical address loading
+
+commit 926b360655fd7a22413c7732faceeea21a224aa1
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Fri Feb 17 01:54:41 2017 -0800
+
+    WIP towards ECALL interface for SBI
+
+commit 611290ccde8d76c1973a37d82a5d4b3e4b7b90c4
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Feb 15 18:59:21 2017 -0800
+
+    Cleanly separate HTIF code; don't poll keyboard on timer interrupt
+
+commit 15a111444d6819021328e990eb5308155a9def6a
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Feb 15 15:26:09 2017 -0800
+
+    Emulate RVFC instructions
+
+commit 4678e84c040531a48eff2108fd9212660bf527ae
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Feb 15 15:20:06 2017 -0800
+
+    Incorporate sptbr/sfence.vma changes
+
+commit 6667bc4c42fd9968527644e32841757234285efd
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Jan 25 22:02:49 2017 -0800
+
+    Placate gcc7 about buffer sizes
+
+commit f6b2274af4a91763ecdb94600d7d54d5f7f262b5
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Tue Dec 6 15:49:59 2016 -0800
+
+    avoid non-standard predefined macros
+
+commit e5ed1d115c178b87807a9d7c966dbaa2b3d3a92e
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Nov 13 17:55:03 2016 -0800
+
+    Add ability to hard-code an initial environment
+
+commit 8039c6cacb5f4627b6085cda1e5c8db8ef70b9d6
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Nov 13 17:52:34 2016 -0800
+
+    For RV32, mmap offset is in 4 KiB increments
+
+commit 55ce524e7407bde35ca7a270de10caf0f73fb9da
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Nov 13 16:50:30 2016 -0800
+
+    Cap pk memory size to 2 GiB for RV32
+
+commit ff807a20bd9a2b4b7e86cb49c466cac0a298b64e
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Nov 13 16:40:58 2016 -0800
+
+    Fix ld.so load address at 4 KiB
+
+commit 558039d5465f3f06b9472c42568f38e34a52c12f
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Sun Nov 13 16:40:24 2016 -0800
+
+    Add syscall stubs to get through libpthread initializers
+
+commit 7a7106885367201ffbfd6f5568d8c5262dbb766d
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Fri Nov 4 13:51:10 2016 -0700
+
+    Acquire lock before attempting tohost/fromhost sequences
+
+commit d5e3e0d86a4ff7034c3dfab172747e8d74063a42
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Fri Nov 4 13:50:29 2016 -0700
+
+    Add spinlock_trylock routine; use it to implement spinlock_lock
+
+commit c6b55ce3a8e45c8747945ab3bcd85580f0d344dd
+Author: Andrew Waterman <andrew@sifive.com>
+Date:   Wed Nov 2 12:16:09 2016 -0700
+
+    Acquire write permissions before zeroing page in ELF loader
+    
+    f81b722bf004177eadaf6f1b4b9e699e20257521 is a regression.  If a
+    read-only segment does not begin on a page boundary, it would cause
+    the ELF loader to blow up.
+
+commit 6c1d0604dcabf36a6a8d8d9a839b2d4634e202d2
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Oct 25 17:10:21 2016 -0700
+
+    Use __riscv_flen macro to detect FP support
+
+commit f81b722bf004177eadaf6f1b4b9e699e20257521
+Author: Howard Mao <zhehao.mao@gmail.com>
+Date:   Wed Sep 21 11:39:08 2016 -0700
+
+    make sure pages for ELF sections have correct protection (#40)
+
+commit f892b43a2bb1c2405b9941aaefdb25e3b4efe1f1
+Author: sashimi-yzh <yuzihao@ict.ac.cn>
+Date:   Fri Sep 16 02:02:20 2016 +0800
+
+    machine, mentry.S: fix not receiving IPI for other harts (#38)
+    
+    * Before waiting for IPI by executing wfi instruction, MSIE bit
+      should be set in mie CSR for other harts, else they will get
+      stuck at the wfi instruction.
+
+commit 8006d004a59618ce455c4365c09e138b06ca7b70
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Sep 9 18:25:10 2016 -0700
+
+    Attempt to disable FPU if using no-FPU pk/bbl
+
+commit 4a6b20595a77a0d3e4e507563232a55ff74febf0
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Sep 9 18:24:28 2016 -0700
+
+    Add -p flag to pk to disable demand paging
+
+commit 292fb6e737b59178ac1911527e995abd161da329
+Author: sashimi-yzh <yuzihao@ict.ac.cn>
+Date:   Sat Sep 10 01:50:54 2016 +0800
+
+    machine, emulation.c: fix the condition of rdtime emulation (#37)
+    
+    The time counter is enabled with the bit field set in `counteren` CSR.
+
+commit 08a6142a0413fe9c6aa86ce58a73f169ab030c7e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Aug 26 19:58:09 2016 -0700
+
+    Update to new counter spec
+
+commit f73dee6f2cc37cafc4b6949dac9ac2d71cf84d10
+Author: Sagar Karandikar <sagark@eecs.berkeley.edu>
+Date:   Tue Aug 16 10:55:26 2016 -0700
+
+    add htif section in linker script, with ALIGNs to prevent MMIO and data from being placed on same page (#32)
+
+commit 0a7862c79ffcf931d5369d50b15774cc1ec8f396
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Aug 10 12:46:09 2016 -0700
+
+    when -s is passed, print time, instret, cycle, and CPI
+
+commit 7520a474199df8b9ef7cee32eebcea7577813814
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Aug 9 16:55:36 2016 -0700
+
+    Disallow execution of RVC binaries on non-RVC pk
+
+commit 55982bd0192a41d76b13ba92b3c1f3ef80f7e029
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jul 29 18:29:44 2016 -0700
+
+    Align pk trap_entry for RVC
+
+commit d42f458b6a7145533912cca3e268e2f6951e3992
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Jul 28 14:22:12 2016 -0700
+
+    Don't let other harts boot before HLS is initialized
+    
+    Use IPIs to signal them.
+
+commit cd6dec56d6f6ead58ec009df0f0394136bbc4fa5
+Author: Prashanth Mundkur <prashanth.mundkur@gmail.com>
+Date:   Thu Jul 21 17:54:34 2016 -0700
+
+    Update the readme with 32-bit info. (#29)
+
+commit 7272e3f9bc7ce1b397db74bd120e0aeb56a6e872
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jul 19 17:35:51 2016 -0700
+
+    Handle misaligned loads in ascending order of byte address
+
+commit dc939be3b31a8d78690583ecccad286b8a2a8f76
+Author: Prashanth Mundkur <prashanth.mundkur@gmail.com>
+Date:   Sat Jul 16 16:39:50 2016 -0700
+
+    Support 32bit build (#27)
+    
+    * Support configuration for a 32-bit build.
+    
+    * Regenerate configure.
+
+commit 748eee73a12b9263bf80a9ca9e8a40ce57a8da6d
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Jul 16 16:16:45 2016 -0700
+
+    Improve trap redirection code
+
+commit 023ae43e8d7b1cdd54ebdc98beeb6dae9dd6f05a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Jul 16 16:16:22 2016 -0700
+
+    Add FCLASS emulation
+
+commit 6bead31951a5f70508b343681a6f6905324f7bec
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jul 12 12:44:47 2016 -0700
+
+    zero-extend RV32 physical addresses for HTIF
+
+commit d88671efdfd08f5fcb33b4c4099d79eb82978c62
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jul 12 11:10:26 2016 -0700
+
+    Remove uarch counters
+    
+    We'll re-add support for the generic performance counter facility once
+    it exists.
+
+commit dadad2d984342643cad8b2d22b7549f986d3e05e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jul 8 18:25:13 2016 -0700
+
+    Remove vestigial configure search for riscv-isa-run/spike
+
+commit f6eff201069564ea01100d556b079f99e076dd09
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Jul 6 03:23:58 2016 -0700
+
+    Udpate to new PTE format
+
+commit 8b41191ccdf19f08662e2eb674a2eddc717d5108
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jul 5 11:16:58 2016 -0700
+
+    Initialize timecmp; add PRCI test
+
+commit 1e62fdfce7b0095a57e4672c6c5fa4d3efb33d2a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Jun 5 23:08:30 2016 -0700
+
+    PLIC registers are 32-bit, not 16-bit
+
+commit 771c1163d397cd08e1974869f15b2e0c2d394602
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Jun 1 17:01:57 2016 -0700
+
+    Clear IPIs using MMIO, not mip CSR
+
+commit f70ee5576a07d455bdcc5275b7fc9d471090bf64
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue May 24 18:47:43 2016 -0700
+
+    speed up memcpy for aligned bases but misaligned length
+
+commit e3afbd7c24f8d64eae3eff09a2074b73fd195de5
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue May 24 18:46:29 2016 -0700
+
+    Remove debug printfs
+
+commit 113d00e652fe6486a0ff76d0fa00557840529d58
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun May 22 02:37:33 2016 -0700
+
+    Add preliminary support for the interrupt controller
+
+commit 1bcab7872c6ae98ab86cdc1a3f567fd263e723d7
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 5 17:07:04 2016 -0700
+
+    Poll HTIF console on timer interrupt
+
+commit 552bc9bf1b09dc33a38d01a9027862ee681072e4
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 5 15:47:49 2016 -0700
+
+    Add missing casts for RV32
+
+commit ee610c0ff858b73b01a3e54d14e640fe08de092d
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue May 3 18:49:46 2016 -0700
+
+    Find IPI address in configuration string
+
+commit 2001632142a11d9a940eee7e3bfbe7c0186fe6ce
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon May 2 14:30:48 2016 -0700
+
+    Don't use tohost/fromhost registers; communicate with host via memory
+
+commit 06dfae8a04c1fb51416472e6e29ec3e926b6cf9b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Apr 30 22:35:14 2016 -0700
+
+    Fix loading of config string pointer
+
+commit 7389e46cd013e0cd23af8a6531e9e104b5a31d09
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Apr 30 17:39:13 2016 -0700
+
+    Move DRAM to high addresses
+
+commit 1a9aefdd006b660093283b039bfa8931319f8ae3
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Apr 30 17:38:30 2016 -0700
+
+    Split out config string parser
+
+commit b535cd6dc878ce775766766a10e0ed43a8911ebd
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 29 10:55:07 2016 -0700
+
+    ERET -> MRET
+
+commit 66776bbc3efce7fb4176ca03fb949f556c2c2d57
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 29 10:54:40 2016 -0700
+
+    Remove mtime/mtimecmp
+
+commit de16a763e6bf266ad49384fa131a502a6174e7ba
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 29 00:06:43 2016 -0700
+
+    Use mbadaddr to speed up misaligned ld/st emulation
+
+commit 1baf122e28fc19af687033358d078bf8e6bab741
+Author: Garret Kelly <gdk@google.com>
+Date:   Wed Apr 20 10:51:22 2016 -0400
+
+    pk: proxy chdir syscall to fesvr
+
+commit d114ddb3ec7881149c2ce2c7cb41ecdf5a5aaa44
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Apr 20 10:56:00 2016 -0700
+
+    Remove Chris Batten COPYING file
+    
+    It's vestigial; he didn't work on this project.
+
+commit ee00503ebecb5f705c8d36c0325ae12afb66a10c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Apr 6 11:00:56 2016 -0700
+
+    Don't assume existence of uarch counters
+
+commit 0eface07b9c2a565b2fcf95fff3fc755811bfb4e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Apr 6 10:47:48 2016 -0700
+
+    Use panic, not die, to terminate elf loader
+
+commit 10e9fa36090a73a9416012ebbf36eec5512e37c1
+Author: SeungRyeol Lee <zizztux.lee@lge.com>
+Date:   Tue Mar 22 15:36:24 2016 +0900
+
+    fix multilib build error. it's type casting related.
+
+commit d5278834830bdd2cb8586f25fe05ae917b0eb949
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 10 01:07:03 2016 -0800
+
+    Misc improvements
+
+commit 469c5f16a7ce5a913248367a420d43dc3518eb88
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 10 00:42:47 2016 -0800
+
+    Make num_harts a uintptr_t
+    
+    Making it a uint32_t is a false economy.
+
+commit 8bd01c7999a1ba98e556492950d76789fe41462b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 10 00:42:41 2016 -0800
+
+    Update encoding
+
+commit f16e9311bf09be32b2cd7f5e988cd60a6f395f7c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 10 00:21:49 2016 -0800
+
+    Remove dead code
+
+commit 82382a1290739068dd38dda8fac29a498f8987a7
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 10 00:13:32 2016 -0800
+
+    Set time comparator correctly on RV32
+    
+    The old code truncated the upper 32 bits, and even if it got that right,
+    it would have generated spurious interrupts.
+
+commit ccf79891f0f1fcb570f9a63c15270b52477fe7c0
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Mar 9 23:54:14 2016 -0800
+
+    Factor emulation routines into multiple files
+
+commit b94c7a4b07f96f24ae7411780abf874416549f7b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Mar 9 23:58:17 2016 -0800
+
+    Refactor pk, bbl, machine into separate libraries
+    
+    Yuck.
+
+commit f5a96732cb81571a3ba6b081b8556187d564f678
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Mar 5 16:40:06 2016 -0800
+
+    Fix ifdef guard on FCSR instructions
+
+commit 33ed6c6c5e28f016bcfa341479ce97bf80d7d104
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Mar 5 16:19:50 2016 -0800
+
+    get rid of struct mainvars
+
+commit 80447e5711461fa58cf61d17a6a1b79f7dcd5294
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Mar 5 14:34:18 2016 -0800
+
+    Disentangle PK and BBL a bit
+
+commit bbc9a65fed7c85ee058d7188a62f0b904c38b77b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Mar 4 21:02:42 2016 -0800
+
+    Begin refactoring emulation code
+
+commit 82dcccf73c7be17415a7e84fc872c9627ee275fc
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 3 16:55:04 2016 -0800
+
+    Don't request KB interrupt til first call to sbi_console_getchar
+
+commit 3dd00b900cf087b0f39d2626c957b228cafed52a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 3 11:57:21 2016 -0800
+
+    Simplify boot code
+
+commit 802f0cf1b573bd3aea052d822cba40d1c63b3f2e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Mar 2 16:27:50 2016 -0800
+
+    fix medeleg typo
+
+commit fba40b7a8c495dbfb5219c2fd478ce993f4b4c45
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 1 16:48:11 2016 -0800
+
+    Use new counter-enable CSRs
+
+commit 5e29b5ccff5958ce4e8ddfd9feefdb6d562843f9
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 1 16:43:59 2016 -0800
+
+    Use RV configuration string instead of device tree
+
+commit dea1fa15f2712b7f6540c41832322c813591315f
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 1 12:19:11 2016 -0800
+
+    Fix vsnprintf infinite loop
+
+commit 39c89b7db54a3a82355e179f33027113b8f69d55
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Feb 29 00:00:11 2016 -0800
+
+    WIP on priv spec v1.9
+
+commit d2d2e0a55c08b15a08892d5b89ee939a5986e69e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Feb 28 20:42:42 2016 -0800
+
+    Remove SBI HTIF support; add console_getchar
+
+commit 75471727f834ba6e227804a2b7330658a65f700a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Feb 28 20:42:24 2016 -0800
+
+    New definitions of misa/marchid/mvendorid
+
+commit 4991166b0c9a676ead9eb92980db646c680c097b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 23 12:46:56 2016 -0800
+
+    Use simpler, less-general IPI interface
+    
+    No need for active messages in this context.
+
+commit bf9ee5ca114921718da280de46046dbc43722641
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 23 12:44:42 2016 -0800
+
+    simplify pk atomics and add atomic_or
+
+commit 573c7d3f12f50fec5aa974c7ebe61f1db59f5152
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 19 12:02:07 2016 -0800
+
+    fix comment
+
+commit 28d64a2227ab45b31c71de8366f4c7f965248ca8
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 12 14:47:17 2016 -0800
+
+    Add SBI calls for remote I$/TLB flushes
+
+commit 26a9320050305bb131921e3a3f0ace95a53f7877
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 12 12:27:17 2016 -0800
+
+    sptbr now holds a PPN, not an address
+
+commit 3c0620321d6316aaa5559a97dadeba5547171576
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Feb 10 23:57:38 2016 -0800
+
+    WIP on priv spec v1.9
+
+commit e984b263e07d2a2085e1856921253bc04c09d12c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 9 13:02:08 2016 -0800
+
+    Cap main memory size at 2 GiB for RV32
+    
+    This works around HTIF limitations and can later be removed.
+
+commit a844b59be2524de7590d71869441f5c5cc4f8d49
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 9 00:17:19 2016 -0800
+
+    Remove sbi_printk macro
+
+commit ef524be3940e58d2dc566840132cbbde6b981436
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 9 00:16:44 2016 -0800
+
+    S-mode shouldn't ever see misaligned load traps
+
+commit d00cb5a5414198379575bc1fc5d5afb79d19ed00
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 9 00:16:26 2016 -0800
+
+    Rely on __riscv_muldiv and __riscv_hard_float macros
+
+commit b0d83d2a8468553000bda6099fc5f907ec767b79
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Feb 9 00:15:55 2016 -0800
+
+    Fix MULW/DIVW/etc. emulation code
+
+commit 57cbf902c90e11fc15bdf402016ac02635dfc78a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Feb 8 15:58:14 2016 -0800
+
+    Remove --disable-atomics flag; rely on -march setting instead
+
+commit ad7a60abeac14c47cfd8d96b6ca2cd07adb833ca
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 5 18:14:42 2016 -0800
+
+    WIP on priv spec v1.9
+
+commit 1d78c4a12e30ca6d51d6863e96661f80534cac74
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 5 18:09:36 2016 -0800
+
+    Simplify status register reloading in pk
+
+commit ba74319214175c0fffe84c79af685d8278831116
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 5 18:07:58 2016 -0800
+
+    Avoid needless IRQ enable/disable
+
+commit d340b4271b2f0fda1a4d824b1e09540947240048
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 5 18:07:07 2016 -0800
+
+    Add SBI calls for IRQ mask/unmask
+
+commit 7016bac5dfb70a63c5041edc0c2922b9d6e3fd89
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 19 12:39:15 2016 -0800
+
+    Fix struct stat size mismatch for RV32
+
+commit 31ad71b8a4a2ef1b9692a844c3b9a938a22fb9b1
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Feb 19 12:09:14 2016 -0800
+
+    Remove incorrect code supporting ELF32 on RV64 and vice-versa
+    
+    This is technically possible by running an RV32 supervisor on an
+    RV64 machine, but the M-mode and S-mode code would need to be
+    compiled and linked separately.
+
+commit 676c953b798e33022a8a63a55f2c65af43442cb4
+Author: Colin Schmidt <colins@eecs.berkeley.edu>
+Date:   Mon Jan 18 23:16:24 2016 -0800
+
+    add renameat syscall
+
+commit 85ae17aa149b9ea114bdd70cc30ea7e73813fb48
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jan 12 16:10:31 2016 -0800
+
+    Write 1 to MIPI, not 0
+
+commit 529a6a3a0c42468bf815255697279e0e059a22db
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Nov 28 16:59:00 2015 -0800
+
+    Change boot procedure to not rely on IPIs
+    
+    That procedure doesn't work correctly if hart 0 comes out of reset while
+    hart 1 is still in reset.
+
+commit d37b50edf5faee2fe41a2586479ddab7c8a2ec9b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Nov 25 21:22:55 2015 -0800
+
+    Don't rely on arpa/inet.h; newlib doesn't provide it
+
+commit e66623316c01ea4cd693120faecffe61a14df824
+Merge: e59b354 6300bfb
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Wed Nov 18 11:17:25 2015 -0800
+
+    Merge pull request #15 from darius-bluespec/fix-disable-fp-emulation
+    
+    Fix --disable-fp-emulation.
+
+commit e59b354ab42c18239e7e88939076bb7841aa205c
+Merge: 83c8b20 b996180
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Wed Nov 18 11:16:38 2015 -0800
+
+    Merge pull request #14 from darius-bluespec/fix-disable-atomics
+    
+    Fix macros for emulating atomic operations (--disable-atomics).
+
+commit 83c8b2027fdbe695ba90f4a505a159767a885c1f
+Merge: 197a8b8 4de5ecc
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Wed Nov 18 11:15:50 2015 -0800
+
+    Merge pull request #13 from darius-bluespec/bbl-include-config
+    
+    Add missing #include for config.h
+
+commit 6300bfbbf81bae92a89b085454898313703acd99
+Author: Darius Rad <darius@bluespec.com>
+Date:   Mon Sep 21 08:58:01 2015 -0400
+
+    Fix --disable-fp-emulation.
+
+commit b9961802ce2f774c884d6708beec5e8ac6f264ed
+Author: Darius Rad <darius@bluespec.com>
+Date:   Mon Sep 21 07:36:27 2015 -0400
+
+    Fix macros for emulating atomic operations (--disable-atomics).
+
+commit 4de5ecc39bce5f4e909bd3c1d2b5d1c95714dd8e
+Author: Darius Rad <darius@bluespec.com>
+Date:   Mon Sep 21 08:26:02 2015 -0400
+
+    Add missing #include for config.h
+
+commit 197a8b81e4bbf61c497c93c0ac4630a33ab11b1c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Nov 16 14:02:07 2015 -0800
+
+    Use IPIs to wake up harts
+    
+    This has the side effect of testing the IPI mechanism.  Still not sure
+    this is the best approach to booting, but it works...
+
+commit 47f9e06fc2c696dfb1054d730cde888f1ac75d07
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Nov 12 17:48:26 2015 -0800
+
+    Read and use devicetree -- THIS BREAKS ROCKET FOR NOW
+
+commit 9cc6732d806b4a7e4842528606fa1390e7ab0a90
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Nov 12 17:18:48 2015 -0800
+
+    print PC of failed assertions
+
+commit fa1b72958119abad2c6e1659ab6db914bf30059f
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Oct 20 00:36:50 2015 -0700
+
+    fix pte_create to deal with protection bits correctly
+
+commit 69b5de4ffa20d6e2028b1656b2de68fbb929c231
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Sep 16 22:44:25 2015 -0700
+
+    Initialize FCSR on boot
+
+commit 09565f73533039dde9a5acf95d3c0d2fe7a0b442
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Sep 14 15:55:09 2015 -0700
+
+    Initialize mtimecmp for debuggability
+
+commit 6fb355c58c23e932309829b6d57f17e91d93b018
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Sep 14 12:47:03 2015 -0700
+
+    Increase VMR limit for SPEC
+
+commit 4a37572381acc146da66720f1f8073772f2c9119
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Sep 14 12:46:54 2015 -0700
+
+    Add ftruncate syscall
+
+commit 18efb61dc4fa2f20ce54cafcf12b12545751dd43
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Sep 14 12:44:45 2015 -0700
+
+    Zero-initialize x-registers for debuggability
+
+commit cc3a93bf30d66a2e38fa744cbd9fb8c97dbf96f2
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Sep 11 17:35:50 2015 -0700
+
+    Stub out a few system calls
+
+commit e81b125dc425f9f19e25140ea4f29783705fe52e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Sep 11 17:07:37 2015 -0700
+
+    Fix single-precision FP emulation
+
+commit d2d16a63e273de44889cfa94106ab9bf2b64e604
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Sep 8 16:56:36 2015 -0700
+
+    Disable RVC in fixed-size assembly blocks
+
+commit 04d07c02bb9bfb850062b70200888c66dc5c1067
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Sep 3 20:53:51 2015 -0700
+
+    Fix RVC build
+
+commit 25acd5c8fd8167e70b9e272a802df3940435edc6
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Sep 2 13:37:03 2015 -0700
+
+    Don't automatically run autoconf
+    
+    Run it yourself if you modify configure.ac, and commit the configure script.
+
+commit 89f4e2a9ef5b80effab2e437ddf5a0dff7bdbf58
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jul 28 02:22:21 2015 -0700
+
+    Fix DECLARE_CAUSE macros
+
+commit a710501a3ff60e41aefc80ff004bd4eabee83d7d
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jul 24 18:47:54 2015 -0700
+
+    Store RV logo in rodata, rather than making it on the fly
+    
+    This works around a stack overflow.
+
+commit 6aa84fd30d23e109f66f9c05e87eda9d4ce7290f
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jul 24 18:42:38 2015 -0700
+
+    Undo last commit
+    
+    It breaks programs that rely on ELF program headers.
+
+commit 39f189549b5703a94c1049bfce23f416eede3c07
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Jul 23 15:31:25 2015 -0700
+
+    Avoid stack overflow with -msoft-float
+
+commit 41e85e084acea757cc7e32b6aef47e4563b47717
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Jul 22 16:49:01 2015 -0700
+
+    Don't let brk stomp on mmap'd regions
+    
+    We were already trying to handle this case, but we got it wrong.
+
+commit a6da37f21720d12f0295876ce426bc081a62a7d8
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Jul 5 16:52:05 2015 -0700
+
+    New M-mode timer and SBI call to use it
+
+commit 027ba300cbeaa425218fd472e1fcf45c785f645c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Jun 24 14:13:08 2015 -0700
+
+    Use sbadaddr (not sepc) to resolve instruction page faults
+
+commit 621793b43ae825188af584e5789ade2e2527c9f8
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Jun 11 13:22:12 2015 -0700
+
+    Fully initialize page tables to zero
+    
+    Previously, a bug caused only some page tables to be zeroed on RV64.
+
+commit 0b66cbb5a9584ae46c0269b0d94456899d775dfd
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jun 2 14:42:35 2015 -0700
+
+    Fix regression causing sbrk to fail spuriously
+
+commit c31914e9440a460e20cd419f4da3d2830ec98442
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun May 31 18:30:31 2015 -0700
+
+    Assume RTC frequency of 10 MHz
+    
+    Of course, this should probably be read from a CSR or platform register.
+
+commit cffdcee338ea682c74fa778244241e2f060199bf
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri May 29 18:24:28 2015 -0700
+
+    Make boot loader/SBI changes to support SMP Linux
+
+commit 835d03d2160be9ee50ba5fd892554ef62fcb13b8
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 28 15:34:13 2015 -0700
+
+    "Fix" mremap bug by returning -ENOSYS
+    
+    mremap was badly broken, and maybe it's not worth the time to fix it.
+    glibc still seems to work ok, because the malloc implementation handles
+    mremap failure gracefully (though at a performance cost).
+
+commit b2251a985c46fb0399d154557937cd5535f6f1af
+Merge: c5f18f6 3cf271e
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Mon May 18 15:29:04 2015 -0700
+
+    Merge pull request #9 from palmer-dabbelt/destdir
+    
+    Change the behavior of the DESTDIR make variable
+
+commit 3cf271ebe5ba6f1f1d16b0fed4b50f1b88cd3caa
+Author: Palmer Dabbelt <palmer@dabbelt.com>
+Date:   Mon May 18 15:24:17 2015 -0700
+
+    Change the behavior of the DESTDIR make variable
+    
+    DESTDIR is a common make idiom.  As per the GNU coding standards
+    
+      https://www.gnu.org/prep/standards/html_node/DESTDIR.html
+    
+      "DESTDIR is a variable prepended to each installed target file, like
+      this:
+    
+      $(INSTALL_PROGRAM) foo $(DESTDIR)$(bindir)/foo
+      $(INSTALL_DATA) libfoo.a $(DESTDIR)$(libdir)/libfoo.a
+    
+      The DESTDIR variable is specified by the user on the make command
+      line as an absolute file name. For example:
+    
+      make DESTDIR=/tmp/stage install
+    
+      DESTDIR should be supported only in the install* and uninstall*
+      targets, as those are the only targets where it is useful.
+    
+      If your installation step would normally install /usr/local/bin/foo
+      and /usr/local/lib/libfoo.a, then an installation invoked as in the
+      example above would install /tmp/stage/usr/local/bin/foo and
+      /tmp/stage/usr/local/lib/libfoo.a instead."
+    
+    The current Makefile.in uses DESTDIR, but has a slightly non-standard
+    behavior: the target install location doesn't include "$prefix".  This
+    breaks package managers, because stuff ends up getting installed to
+    the wrong location.
+    
+    Unfortunately the only way I can think of to fix this involves
+    silently changing the behavior of DESTDIR.  Hopefully nobody is using
+    it...?
+    
+    [port of 8a2088b59162fe16c16d26ddc1cfcaaaa8c4156f in riscv-fesvr]
+
+commit c5f18f61c07228f6606d2217230751d8ec6e091a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 14 02:14:14 2015 -0700
+
+    Add sbi_shutdown call
+
+commit 3f9b5d7ab80d11eb11739d9a02b4d0b66ace058b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 14 02:13:59 2015 -0700
+
+    Fix VM, MIP encoding
+
+commit f2034b7472fa289136723968a492c695936cd152
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun May 10 22:29:24 2015 -0700
+
+    Update README
+
+commit 87683e74f566afe6acaf77fd79cc0bf2746bf136
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun May 10 22:16:46 2015 -0700
+
+    Split pk functionality into pk and bbl
+    
+    pk is now an AEE only (i.e. it can only execute user programs).
+    bbl is now an SEE only (i.e. it can only host kernels).
+
+commit 50a2d6ca7fb63cfabd0f8bc086abb8fcd49f0ded
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun May 10 21:46:24 2015 -0700
+
+    Fix build using glibc toolchain
+
+commit 1a8572a47db3151323ec390c430da37d831fc962
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat May 9 16:17:11 2015 -0700
+
+    Upgrade to privileged architecture 1.7
+
+commit ac7853a1bc5fcbee820a4f1472aa59eaf074e4e9
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri May 8 17:21:27 2015 -0700
+
+    Initialize the mailbox on boot
+    
+    This fixes a bug when running on HW.
+
+commit 33e738d643b360d05ffbeaf5449d2a9117f67125
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat May 2 18:06:53 2015 -0700
+
+    Add ASCII art boot logo
+    
+    It's only printed when booting the Linux kernel.  Feel free to improve the
+    quality of the ASCII art.  It looks like this when rendered:
+    
+                  vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+                      vvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvv
+    rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvv
+    rr                vvvvvvvvvvvvvvvvvvvvvv
+    rr            vvvvvvvvvvvvvvvvvvvvvvvv      rr
+    rrrr      vvvvvvvvvvvvvvvvvvvvvvvvvv      rrrr
+    rrrrrr      vvvvvvvvvvvvvvvvvvvvvv      rrrrrr
+    rrrrrrrr      vvvvvvvvvvvvvvvvvv      rrrrrrrr
+    rrrrrrrrrr      vvvvvvvvvvvvvv      rrrrrrrrrr
+    rrrrrrrrrrrr      vvvvvvvvvv      rrrrrrrrrrrr
+    rrrrrrrrrrrrrr      vvvvvv      rrrrrrrrrrrrrr
+    rrrrrrrrrrrrrrrr      vv      rrrrrrrrrrrrrrrr
+    rrrrrrrrrrrrrrrrrr          rrrrrrrrrrrrrrrrrr
+    rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr
+    rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr
+    
+           INSTRUCTION SETS WANT TO BE FREE
+
+commit d3d746f016ccc2218525f950fc00b96dedd00f54
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Apr 30 23:58:49 2015 -0700
+
+    Assume even less about mstatus reset value
+
+commit 2d8f51fcca517101c80e9c425058b0171daef22e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 24 19:52:01 2015 -0700
+
+    "Fix" RV32 programs running on RV64 pk
+    
+    Only allocate virtual addresses under 2^31.  We might revise the
+    RV32-on-RV64 semantics to zero-extend the RV32 virtual addresses,
+    which would allow the user program's use of the full 4 GB.
+
+commit 15b3ac1e94a482ec22da49932475ec76b3f5392b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Apr 19 16:14:46 2015 -0700
+
+    Fix loading of misaligned ELF segments
+
+commit e474878db4a406fb0bc7f6051314352f4406fcd2
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 10 14:58:00 2015 -0700
+
+    Fix stack discipline for recursive traps
+
+commit 01fd29cb6ef8202ef6201f6f471dec9cbd1a4145
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 3 22:18:54 2015 -0700
+
+    Make PK compile on RV32
+    
+    Of course, it doesn't work, because there's no support for
+    fromhost/tohost devices in RV32.
+
+commit a24e1934dd116a3a6a11c095de7bed56ee271986
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 31 23:18:09 2015 -0700
+
+    Remove errant statement forcing mem size to 64M
+    
+    h/t Palmer
+
+commit e554f30be8f77a08c7da2d2678aac640e664cc44
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 31 01:44:49 2015 -0700
+
+    Don't rely on mstatus.fs to determine FPU presence
+
+commit 91058db5a6a5d72631981b00788bc5c906bf5f14
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 31 01:32:48 2015 -0700
+
+    Fix FP store emulation bug
+
+commit aedc6165cc28a4a74267eefd5da1862981f5b40f
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 24 16:38:46 2015 -0700
+
+    New virtual memory implementation (Sv39)
+
+commit f6659f1c764ad5d3d64743567914608ec3ed8b06
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Mar 23 02:59:44 2015 -0700
+
+    Make printk safer and use less stack
+
+commit a79f62f72a897f9eafea1b41d98e1367dd413d02
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Mar 17 01:19:10 2015 -0700
+
+    Merge [shm]call into ecall, [shm]ret into eret
+
+commit 40668501fa8d52054f5678db4e6dd32b5ed7fe15
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Mar 14 02:06:21 2015 -0700
+
+    Fix some bugs in FP emulation
+
+commit 438823e1308b219aa7daf11cf86e3028e9b8667d
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 12 23:06:07 2015 -0700
+
+    Use hcall instead of mcall for sbi calls
+
+commit 6517fe26a2a0c89c3112f4a383c601572c71d64a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Mar 12 17:38:04 2015 -0700
+
+    Update to new privileged spec
+
+commit a4ae7da6ef0c09c2616a0b82f7f569e4e134f75c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Feb 28 17:33:03 2015 -0800
+
+    Fix softfloat float->int corner cases
+
+commit 5c8645013001ff125f9b28e0f861328e9b9a4d12
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Feb 9 15:38:07 2015 -0800
+
+    work in progress on new supervisor spec
+
+commit d2b36b1484059c5792cdf9243f972c83bb96026a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Feb 9 14:52:34 2015 -0800
+
+    Fix FLE.D emulation
+
+commit 6d84558e151fa7b5c1c830fffe13893e9c33e6e9
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jan 30 13:01:50 2015 -0800
+
+    Emulate FP CSRs
+
+commit d05359c14e60295b7c90337a5d8004efe814813e
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Mon Jan 26 18:21:26 2015 -0800
+
+    return -ENOSYS for ioctl, rather than aborting
+
+commit 0a81fd3a93ad9eaebae17b207c0048bf5fda1aa2
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Jan 20 16:40:30 2015 -0800
+
+    Support linkat, unlinkat, mkdirat syscalls
+    
+    Also, old-style syscalls e.g. open are now implemented with e.g. openat.
+
+commit b222ef6bcb12197276affa231a4a3b36c068ea75
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Tue Jan 20 17:11:21 2015 -0800
+
+    Increased max number of files,fds statically supported by pk.
+    
+    The SPECINT benchmark 445.gobmk reads in a lot of files and would
+    sometimes fail due to being unable to open more files.
+
+commit 68a2fe242b6255738caf1414f2d99fc4bcce3b7f
+Author: Andrew Waterman <aswaterman@gmail.com>
+Date:   Fri Jan 2 17:28:17 2015 -0800
+
+    Don't automatically set --host
+
+commit eb17863052b71e99eab51a656519f1b04382788e
+Author: Arun Thomas <arun.thomas@gmail.com>
+Date:   Thu Dec 11 11:08:29 2014 -0500
+
+    README: use gnu-toolchain for configure step
+
+commit 19c8f691480ccc5ea8654dceff9c47888d5ea407
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Dec 11 06:02:14 2014 -0800
+
+    Relocate binaries that conflict with the pk's address space
+    
+    Of course, this is only possible for PIEs, e.g. the dynamic linker.
+
+commit 015195b66ead210334c66ca6cb81b67c29aa50a6
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sat Nov 22 09:00:51 2014 -0800
+
+    Revert "Enable support for the four custom instructions"
+    
+    This reverts commit 2fa1726f0ebbe5911cd12c27c42881f17ec43114.
+    
+    Refactoring support for custom instructions.
+
+commit 069bdd3f0d1348e079221d62bdc1bd2f1bc33841
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Oct 31 22:40:06 2014 -0700
+
+    Implement draft of new calling convention
+    
+    Here is the new syscall ABI:
+    
+      syscall number in a7
+      args in a0 - a6
+      return value in a0
+    
+    Here is the integer register map:
+    
+      x0  -> x0
+      x1  -> ra
+      x2  -> sp
+      x3  -> tp
+      x4  -> gp
+      x5  -> t0
+      x6  -> t1
+      x7  -> t2
+      x8  -> s0
+      x9  -> s1
+      x10 -> a0
+      x11 -> a1
+      x12 -> a2
+      x13 -> a3
+      x14 -> a4
+      x15 -> a5
+      x16 -> a6
+      x17 -> a7
+      x18 -> s2
+      x19 -> s3
+      x20 -> s4
+      x21 -> s5
+      x22 -> s6
+      x23 -> s7
+      x24 -> s8
+      x25 -> s9
+      x26 -> s10
+      x27 -> s11
+      x28 -> t3
+      x29 -> t4
+      x30 -> t5
+      x31 -> t6
+
+commit 514adef4868460944738f39734f282dc14e4d744
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Oct 28 00:50:07 2014 -0700
+
+    don't forget to release locks!
+
+commit 6d45e8de32cce54e3cc6688545e58da5a9aaead7
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Oct 26 19:38:24 2014 -0700
+
+    Prioritize fdiv/fsqrt emulation
+
+commit fda0d85ae4596262d1da642593676e0f3cf3f0f1
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Oct 26 19:36:28 2014 -0700
+
+    Don't rely on the C library
+
+commit 90e64853188620e02a02727ff050e5014cbc2528
+Merge: 9eda71d 2fa1726
+Author: Yunsup Lee <yunsup@eecs.berkeley.edu>
+Date:   Fri Oct 24 09:54:57 2014 -0700
+
+    Merge pull request #3 from arunthomas/custom_inst
+    
+    Enable support for the four custom instructions
+
+commit 2fa1726f0ebbe5911cd12c27c42881f17ec43114
+Author: Arun Thomas <arun.thomas@gmail.com>
+Date:   Thu Oct 23 17:10:38 2014 -0400
+
+    Enable support for the four custom instructions
+    
+    * Update generated encoding.h (generated from riscv-opcodes)
+
+commit 9eda71d78ed4c1dc2e86f07a3be7452d307a218f
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Sep 11 19:48:15 2014 -0700
+
+    Don't assume null pointers can't be dereferenced
+    
+    This option breaks vm_init's access to word 0 to obtain the memory capacity.
+
+commit 3ccbeca6a9e8d8b066eda28583765d8e087f3da4
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Sep 11 19:43:51 2014 -0700
+
+    Disable pedantic warning under gcc 4.9.1
+
+commit 1d953bf6fc012167be65cdc8c6fe1197cf1d2ecc
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Sep 11 15:42:54 2014 -0700
+
+    Support glibc 2.20 programs
+
+commit 024053cd98c3bfc0bf6a9c4c219c9fb030f4a660
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Sun Aug 10 01:01:49 2014 -0700
+
+    Fix uarch counter printout type.
+
+commit 53385b7dbd3829f8d0773819dd475732d8820481
+Merge: 92afb6f 5eba64d
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Aug 7 21:38:14 2014 -0700
+
+    Merge pull request #2 from ccelio/master
+    
+    Added "-c" option to track uarch counter info.
+
+commit 5eba64df88be49c4f2aaddeda3f3f81d7b4b34f3
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Thu Aug 7 18:44:48 2014 -0700
+
+    Added "-c" option to track uarch counter info.
+
+commit 92afb6f40797a68e2a16c9abd5cdb3c9336da307
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Thu Aug 7 17:06:02 2014 -0700
+
+    Fixed README to match the riscv-tools build script install location.
+
+commit 929d2f0109570a84f9455b153d2547b172b0ac01
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Wed Aug 6 16:38:44 2014 -0700
+
+    readme
+
+commit 0ea44d8707e796d8b68a026b243f35b25d2f81a0
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Wed Jun 25 18:52:19 2014 -0700
+
+    Let timer interrupt stay set on pk start (IP[7]).
+    
+    Otherwise, the HW will trip the timer interrupt 4B cycles later and thus not match spike.
+
+commit 7b6a968c83af5c64db7b874e3b318ee2882b5cf1
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Fri Jun 13 02:33:32 2014 -0700
+
+    Changes to allow spike & RTL behavior to better match each other.
+    
+      - EI turned off on sys_exit.
+      - IM/IP cleared on start.
+      - badvaddr only saved to tf on page faults.
+
+commit e3fa35fb859dc19d5ed2246c0bd7f0189a267bfa
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Jun 12 15:32:43 2014 -0700
+
+    Handle options before vm_init is called
+    
+    This prevents ptbr etc. from being accessed when -p is passed.
+
+commit a421961a417d0cb1a4201b05e86b460f5a67e588
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Jun 12 15:29:56 2014 -0700
+
+    Fix file reference counting bug in physical address mode
+
+commit 2934c5a65f85876f056edcd3a8c8ea3e7a8c442e
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Jun 12 15:29:30 2014 -0700
+
+    Add file reference counting sanity check
+
+commit 053aa8ff8006427abe89afc0df944a201d424af2
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Tue Jun 3 11:06:38 2014 -0700
+
+    Turn off interrupts when talking to host
+
+commit 8fc3a35ba546209532c5ee79db52f4f706bf6beb
+Author: Colin Schmidt <colins@berkeley.edu>
+Date:   Tue May 27 10:27:43 2014 -0700
+
+    Allow mmap to map new segments larger than 1 page on top of existing mappings and add mprotect syscall
+
+commit 863e01b99095626a447d61f8f67fb4f1e6ba5355
+Author: Colin Schmidt <colins@berkeley.edu>
+Date:   Thu May 22 21:58:11 2014 -0700
+
+    remove debug print statements
+
+commit 7790a3cc371ed07b464e787c85ddd3e3f0b8169c
+Author: Colin Schmidt <colins@berkeley.edu>
+Date:   Thu May 22 19:26:15 2014 -0700
+
+    determine the address for an mmap before setuping the vmr
+
+commit e50dc18f5df45ea358182ce7d986b77858219cd9
+Author: Colin Schmidt <colins@berkeley.edu>
+Date:   Thu May 22 18:56:56 2014 -0700
+
+    Add several syscalls, and move syscall header file from newlib
+    syscalls added (openat, access, accessat, faccessat, etc.)
+
+commit 894fe673b4f1326abd29512c8419759698d8ea2c
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu May 22 18:10:49 2014 -0700
+
+    Support mmapping files whose length is not divisible by pgsize
+
+commit 3d8acf5bf5ec26c28316874a5e55e15552584a09
+Author: Scott Beamer <sbeamer@eecs.berkeley.edu>
+Date:   Tue May 6 15:02:48 2014 -0700
+
+    fixes vm leak. pages that faulted never decref'd their vmr so it wasn't reused
+
+commit 75bc78fac86594abe89e76352701dc48e8352394
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Tue Apr 29 18:52:56 2014 -0700
+
+    PK now advances past breakpoint.
+
+commit d7e575c453c5ce6ad56f962c305571d5fd655de8
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Sun Apr 27 22:44:13 2014 -0700
+
+    Use atomic_cas instead of __sync_bool_compare_and_swap
+
+commit 5a7be7d173fbfe3ba16abe24c1fd977cb0a7c653
+Author: Stephen Twigg <sdtwigg@eecs.berkeley.edu>
+Date:   Thu Apr 3 16:51:35 2014 -0700
+
+    Sync encoding.h with opcodes
+
+commit 249cea820cf1a1345711ab7a02a479466d1ffc2c
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Tue Mar 11 19:10:18 2014 -0700
+
+    New FP encoding
+
+commit a43d87cf0ae16acff8763130f0c7e40014616cff
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Thu Mar 6 18:49:41 2014 -0800
+
+    Add fclass.{s|d} instructions
+
+commit 07599f5833dcce1cf154b543da0cec46a0953c45
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sun Mar 2 02:44:56 2014 -0800
+
+    Renumber uarch CSRs into custom CSR space
+
+commit 7c958898bba8a97ec73646d220b6ee6870fca2e7
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Mon Feb 10 19:03:43 2014 -0800
+
+    Revert to old AUIPC definition
+
+commit 8b310c29a2e80b23c4094334f4f0f0283a4f3d9a
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Thu Feb 6 11:25:02 2014 -0800
+
+    commit missing definitions for uarch counters
+
+commit f1f8dbbed01d67a3cb64a17c73078d124c33d2ab
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Tue Feb 4 15:29:06 2014 -0800
+
+    Abandon MIPS convention for indicating syscall errors in register a3
+
+commit ac88604e8850779c33ec888ccc8399604fb2677c
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Fri Jan 17 14:12:42 2014 -0800
+
+    Minor cleanup
+
+commit b71e8ecfda6a75d4bcf240e61dbc3348e76af094
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Mon Jan 13 16:29:53 2014 -0800
+
+    Assume pc-relative addressing
+
+commit 5cd583648dfcb1e36a0054efc910435293d216e3
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Mon Jan 13 16:29:03 2014 -0800
+
+    Speed up glibc init
+
+commit 85c6c88804ce15b8ec8b53894e69984be90b11b0
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Dec 14 02:26:49 2013 -0800
+
+    Respect rounding mode for FP -> Int conversions
+
+commit 89a0cefd28cb7bdd33e0d17d43cfad5ae6d7e19f
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Dec 14 01:59:48 2013 -0800
+
+    Add -p flag: force physical memory addressing
+
+commit a502c24732b1eb9f13c9addde81f2be536092fe1
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Dec 14 01:57:42 2013 -0800
+
+    Remove redundant initialization
+
+commit dc49b2b13a112af3ce5d81eed2129160f2f0d3a4
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Dec 13 16:38:43 2013 -0800
+
+    Add times syscall
+
+commit f62e692e72d1626977be0e92f766bdeed305d903
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Mon Nov 25 02:02:42 2013 -0800
+
+    Update to new privileged ISA
+
+commit a8889d65d249a71f009433766a1e9b1405945708
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Thu Nov 21 14:42:50 2013 -0800
+
+    fix slli/slliw encoding bug
+
+commit 6c0a4423c5b05221fc1c23b838316ffa88c0858d
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Wed Nov 13 14:38:09 2013 -0800
+
+    Add gettimeofday syscall
+
+commit 43c14ea417d21968d918447662a1c4722a3887d2
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Nov 5 21:09:11 2013 -0800
+
+    sync pcr.h, correctly name SR_EA
+
+commit d1412a1cb9f54ab116166b0eb93b412b7194f1cb
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Tue Oct 29 22:01:45 2013 -0700
+
+    Update ISA encoding in emulation routines
+
+commit 1f378f55b35729b36ba3ad3e403aaae3b23ca8a9
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Sep 24 12:46:38 2013 -0700
+
+    Fix rv32 bug
+
+commit b9fcbcb842be3808f36757bf059c482d027eaf0d
+Author: Scott Beamer <sbeamer@eecs.berkeley.edu>
+Date:   Mon Sep 23 15:52:19 2013 -0700
+
+    expanding instructions to match the way it is called by build.sh in riscv-tools
+
+commit 2960fa547a683f4a6bba06278ed58c23f3f62a85
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Sep 21 06:42:30 2013 -0700
+
+    Update ISA encoding
+
+commit 5e742ad9671ee726213d662f39091fe1131c7ce6
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Sep 11 04:17:37 2013 -0700
+
+    Add pk flag -s to print out stats
+    
+    (the only stat is cycle count)
+
+commit 4ff4af91737eb16e5c9084186b6c74e6693ac755
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Sep 11 04:17:04 2013 -0700
+
+    Update opcodes
+
+commit 00f72998242a588c2bbd050d0929d852664d97e4
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Wed Sep 11 04:16:51 2013 -0700
+
+    Add some syscalls
+
+commit 2a0bfcd3da1a9f76cd2d0b05f59afb6533faa318
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Aug 19 18:08:31 2013 -0700
+
+    Don't clobber the ELF headers!
+
+commit ecb15c6cabd106a186ee1caad086cb11c80cb84e
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Aug 18 22:40:49 2013 -0700
+
+    Limit program size to simplify RV32
+
+commit 186ae3cc353fa3115d4ee0c9fcb18d8b2370c68c
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Aug 18 04:17:29 2013 -0700
+
+    Renumber PCRs; refer to them with new ASM syntax
+
+commit 2f7d5b9ee2ea937c6734650fecd9952e070a9795
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Aug 18 04:16:53 2013 -0700
+
+    Rename MTFSR/MFFSR to FSSR/FRSR
+
+commit 8416e35faedf15fb6be3b6b5f7fa6a5c3e6da067
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Aug 18 04:16:17 2013 -0700
+
+    Use macro instead of function for save_tf
+
+commit 33a258dd762e928ba77094a210f6b91dc5daf7f0
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Aug 18 04:14:59 2013 -0700
+
+    Use new ABI register names
+
+commit a43ca9b0643d9333666f2f05e94053c0c85ae6f2
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sun Jul 28 19:44:52 2013 -0700
+
+    use FATC, not PTBR, to flush addr translations
+
+commit 3168b8a9049d062192ea20e4b33fed6286e84220
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jul 26 20:25:50 2013 -0700
+
+    New supervisor mode
+
+commit 80a4afcb47c0b82b36bd818b4c47e5dfd506ae77
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jul 19 15:29:02 2013 -0700
+
+    Remove extraneous printk
+
+commit cc72987e655578b0529b6c3c8084e810cf40b358
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat Jul 13 21:43:57 2013 -0700
+
+    Support Linux ABI and (optionally) virtual memory
+
+commit 0bdb8c84092bf7c5eb4c981c620997a5893bfb70
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Mon Jul 1 16:08:20 2013 -0700
+
+    Fixed -lgcc bug in configure.ac (needed for -m32)
+
+commit 4a8de9ed7285bb497bc236aec9319bc639b9f114
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Sat May 25 03:41:15 2013 -0700
+
+    add sample code for remote frame buffer
+
+commit 9cff987563c7873a5471b4a195fd32d75d3217e0
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 23 15:42:14 2013 -0700
+
+    add block device read/write example
+
+commit 8bad38e1a9321631de6ece0e150f0124e8c824b8
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 23 15:41:30 2013 -0700
+
+    use string.h functions in newlib (-lc)
+
+commit 17058f071b6bd2e2287c825aaebd390730ec5bdc
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu May 23 08:55:29 2013 -0700
+
+    add sample device enumeration code
+
+commit f619a02f9fd816f4a438f2c389b6416da9e42cdd
+Author: Stephen Twigg <sdtwigg@eecs.berkeley.edu>
+Date:   Wed May 22 19:12:28 2013 -0700
+
+    properly search for the new isa simulator (spike)
+
+commit 276c20be4c55119e8689a40e157a3a31d2be7673
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 19 22:57:37 2013 -0700
+
+    implement new register mapping
+
+commit 0e1ecaf359beb5766c590bbb3f16a3bcb040a18d
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Apr 19 22:57:22 2013 -0700
+
+    add missing LICENSE file
+
+commit accebe9e63daa56883c20b2fda6b5e72a74f412b
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Mar 25 16:51:32 2013 -0700
+
+    add BSD license
+
+commit 5ba0377b291ceb5d1e96674831cb6fd15eebf980
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Mon Mar 25 16:50:22 2013 -0700
+
+    add clean-room elf.h to avoid GPL entanglement
+
+commit 1cc5f32ea1bee3d7bce14d064651ea417a68e148
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Thu Feb 28 05:40:19 2013 -0800
+
+    remove unneeded .ent, .end asm directives
+
+commit e0e1662fc1a89c2189217e43a9364e63110c685a
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Fri Jan 25 19:00:37 2013 -0800
+
+    rename binary to pk; change argv handling
+    
+    the new fesvr approach makes argv[0] = pk, rather than user program's name
+
+commit 8c4a41f9835d56437c44631d97ef592e948385d9
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Sat Nov 17 03:43:57 2012 -0800
+
+    fix spinlocks; add --disable-atomics cfg opt
+
+commit 93f6f1ff134333a61580677a685ad61718ad0726
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Mon Sep 10 19:11:55 2012 -0700
+
+    Cleanup of div/divu/rem/remu.
+
+commit 79e238eff793adf04017519e10b30cc212f4c4bb
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Mon Sep 10 17:51:35 2012 -0700
+
+    div/rem bug fixes.
+
+commit dd32a44bc07fe36d8c777e745b0b509ce2e55a2c
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Fri Sep 7 22:30:49 2012 -0700
+
+    Fixed bug with mul.c
+
+commit d6a522404a38405ecfad78839d4c29bf5cb02e9b
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Fri Sep 7 21:56:51 2012 -0700
+
+    Added rough emulation support for div/rem/mul.
+
+commit 6336ef155fabdd15eecf11949b7e13a49e279738
+Author: Andrew Waterman <waterman@cs.berkeley.edu>
+Date:   Tue Sep 4 23:23:08 2012 -0700
+
+    fix FP emulation routines
+    
+    to disable, add --disable-fp-emulation to configure command line
+
+commit 6941d5f6b0929517a1bfc410b2a97ff0574716a4
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Thu Aug 30 17:48:17 2012 -0700
+
+    respect CFLAGS and LDFLAGS env vars
+
+commit d3a541bcee38f15fc2aee3edfc1bc6f5b6e9b1be
+Author: Christopher Celio <celio@eecs.berkeley.edu>
+Date:   Thu Aug 30 17:41:11 2012 -0700
+
+    set status register correctly for rv32
+
+commit 2260383b5245cf73fef4434d9f69a4c98311b7cd
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Wed Aug 1 22:53:55 2012 -0700
+
+    new tohost/fromhost semantics
+
+commit 15f31b54049fda09b60dc8e0b74dd5f65c7c8318
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Sat Mar 24 12:58:30 2012 -0700
+
+    new supervisor mode
+
+commit 1ee491bbc51e6b7e59d99332cb9359c84b749f8a
+Author: Andrew Waterman <waterman@eecs.berkeley.edu>
+Date:   Sun Mar 18 20:47:11 2012 -0700
+
+    update vector fences
+
+commit b294e1965416dbe65ea3b9460f35d63c8d3f4d73
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sun Mar 18 16:28:44 2012 -0700
+
+    clean up vector exception instructions
+
+commit 343fbdf3b546af4fc85a761c65d623e4096a60fa
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Mar 13 23:40:59 2012 -0700
+
+    add more instructions for vector exception handling
+
+commit 0c94aa0867046b7e2c1c3c317c53237ce8b17f74
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Mar 13 22:24:20 2012 -0700
+
+    add vvcfg,vtcfg
+
+commit 85eacebdccfe36676efb8a70dc2d133e281c7445
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Mar 13 10:14:35 2012 -0700
+
+    opcodes cleanup
+
+commit 12c6602ea76fd397f21ff1e139bab8f20a7d7dc2
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sat Mar 10 12:52:29 2012 -0800
+
+    slight change to vector supervisor instructions
+
+commit c86d7c3b959bb6dbf7f15d74ea58582a9ade7a4a
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sat Mar 3 15:10:43 2012 -0800
+
+    new instructions to handle vector exceptions
+
+commit 8d3a16be75f0241791152540daa9f0ad069d5271
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Nov 11 03:43:44 2011 -0800
+
+    MFTX now uses RS1 for its source
+
+commit 8717517e048ff866167d6eee6c6d97225f0cd169
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Nov 11 03:40:24 2011 -0800
+
+    Synced up PK with supervisor changes/asm syntax
+    
+    You must upgrade to the latest compiler and ISA
+    simulator to build and run this version of the PK.
+
+commit 2f5776b244a4a2a8297fee9e0160c835430e1f06
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Jun 19 21:56:15 2011 -0700
+
+    configure argument --host=riscv is now implied
+
+commit 1e163c715550e20e239976a22e00869884713e54
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Jun 19 21:45:58 2011 -0700
+
+    fixed build after repo split
+
+commit 0edaecc54329048eb91ad6a45338265ef1a4569c
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Jun 19 20:47:29 2011 -0700
+
+    temporary undoing of renaming
+
+commit e63e4fbe8794c68e1ad846a36e33cba62e801b34
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Jun 19 20:37:58 2011 -0700
+
+    Renamed packages
+
+commit 13c751687d01dc59bfd3e0913cecadf17f025caa
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Jun 1 00:21:04 2011 -0700
+
+    [pk] fixed memset bug (again...)
+
+commit 81a089d4ad784742adb4f13415a7fa26d9b7e504
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Fri May 20 15:56:25 2011 -0700
+
+    [pk] fixed FP emulation (rounding mode bug)
+
+commit 44191e8a5ef91b18e9a06c8ec9fec6e5f1f3860b
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Fri May 20 13:53:48 2011 -0700
+
+    [pk] fixed elf loader
+
+commit be22e4abd5fd8dad83068744a0d1497d50a2806c
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Thu May 19 15:28:26 2011 -0700
+
+    [pk] made PK smaller
+
+commit 92a8f05f5a2081deb086ad478c3ecbfd4e649002
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Wed May 18 14:35:32 2011 -0700
+
+    [opcodes,pk,sim] add more vector traps (for #banks, illegal instructions)
+
+commit bbd999a00eb4859576db2422ceefc0ebf6d721e5
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Mon May 16 14:34:11 2011 -0700
+
+    [sim,pk] cleanups & initial virtual memory support
+
+commit 5fa814486ad9b7e14f76f8c4cdc1f058bd0db706
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sun May 15 22:53:52 2011 -0700
+
+    [opcodes,pk,sim,xcc] resolve a conflict
+
+commit 7b7b739e649edaf89e22608d0b9e9e961f09e47c
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sun May 15 22:33:25 2011 -0700
+
+    [libs,opcodes,pk,sim,xcc] add mov*,fmov*, shuffle vec insts
+
+commit 84ae9f2862f26b24877a42ba6e05d1dcec6c525e
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Fri May 13 14:56:57 2011 -0700
+
+    tweaked encoding of rdcycle & cousins
+
+commit 8a5f662532f4fae850b686b87573b25289b024b3
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Apr 24 21:22:40 2011 -0700
+
+    [xcc,sim,opcodes] added c.addiw
+
+commit 98d050a8f48eba092a38e2d1f16635100fe9092f
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Apr 24 16:35:13 2011 -0700
+
+    [xcc,sim,opcodes] added more RVC instructions
+
+commit a7259c6221b0e619f7a6d212e919f07e7f5b9c7d
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Thu Apr 21 21:21:22 2011 -0700
+
+    [pk] fixed lseek syscall
+
+commit 9ea79f3279e381ca8e186bb791895c411964f0e7
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Mon Apr 18 19:28:51 2011 -0700
+
+    [xcc,sim,opcodes] added rvc conditional branches
+
+commit 0be1f5eb1b1ff0c31036c9f1b7efeedee7fe4909
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sat Apr 16 19:46:00 2011 -0700
+
+    [pk] fixed timer interrupt handler, etc.
+
+commit 6b9ea8b8e0d3bdf66727a2bc3e9dce72a77fa514
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Apr 15 16:14:03 2011 -0700
+
+    [pk] limit programs to 2GB (for RV32 simplicity)
+
+commit 0d603acb91f455adb879ea45fdb84313067f4293
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Apr 15 15:52:00 2011 -0700
+
+    [pk] load pk at addr 0; user stack top = MEMSIZE
+
+commit ba0cf0546686acac7e891d9740009bcc4ada73ee
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Apr 15 14:32:18 2011 -0700
+
+    [pk] fixed timer interrupt bug, etc.
+
+commit 04c8f1c003bbee2f9b45f5e706103837a6d61a30
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Wed Apr 13 22:36:37 2011 -0700
+
+    [pk] fixed rv32 (dumb memset bug)
+
+commit 69ddca76d2e132762ef529bc86a7d0cb6050dede
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Apr 12 22:32:51 2011 -0700
+
+    [pk] add cache flush after program load
+
+commit 64d0c6765ce07cfe3fd860a4428fa5e2cc89d97a
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Apr 12 18:27:26 2011 -0700
+
+    [xcc,pk,sim] added privileged cflush instruction
+
+commit 85d19630004cddba58c44e2e0199a715b9c74b44
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Apr 12 01:42:55 2011 -0700
+
+    [xcc,sim] rvc loads and stores
+
+commit 27afdf1a005c2e24af79107095aae3155e68b254
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Apr 12 01:42:20 2011 -0700
+
+    [sim,pk] fixed minor pk bugs and trap codes
+
+commit 7e6145731f4d52e9b6a6383c650c8de68da7aa34
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Mon Apr 11 17:09:50 2011 -0700
+
+    [xcc,sim,opcodes] more rvc instructions and bug fixes
+
+commit 5e7e315deeebf89e7843e0a69d7a22808320257f
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sat Apr 9 20:15:05 2011 -0700
+
+    [pk] fix init_fp function prototype
+
+commit 033e1e62bddb71851221ca2076945a22e5c98ca3
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sat Apr 9 20:13:36 2011 -0700
+
+    [pk] add vector_disabled trap handler
+
+commit e23cce64e28b8af2130f1ade3b3bbdec35a19eed
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sat Apr 9 20:03:07 2011 -0700
+
+    [xcc, sim] added rvc insn c.li; misc fixes
+
+commit 53eb346e31582ce814f61f5e8b2c3087aa8c33f2
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sat Apr 9 17:50:12 2011 -0700
+
+    [sim,pk] reorganized status register
+
+commit 6e7fe98ea95c6da8c573fdc032b5269f08bbacc1
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sat Apr 9 17:37:42 2011 -0700
+
+    [xcc,pk,sim,opcodes] added first RVC instruction
+
+commit 666ae0c9e5355e578c2487b81f48b4b74cc16dda
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Apr 8 01:57:38 2011 -0700
+
+    [pk,fesvr] pk now loads elfs itself
+    
+    this allows it to detect 32b binaries
+
+commit c6fef75003abf36c618b9fff4f64f3bda76af804
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Wed Apr 6 22:44:57 2011 -0700
+
+    [opcodes,pk,sim,xcc] fix utidx - add rd
+
+commit 5eb059390c2425959a6d7025fa782db82942135c
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Apr 5 00:50:52 2011 -0700
+
+    [opcodes,pk,sim,xcc] fix vector mem instruction format, add vector seg mem instructions
+
+commit 3706ca66d3e0dd6ddd45c632bd0c6e305ab01987
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Mon Apr 4 01:50:56 2011 -0700
+
+    [opcodes,pk,sim,xcc] add leftover vector instructions (vf, etc.)
+
+commit 3cfe170bfa95adc42b1fd1db6a2835c6efaaef5d
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Mon Apr 4 01:16:10 2011 -0700
+
+    [opcodes,pk,sim,xcc] add vector mem instructions
+
+commit ae7b2fd1908de02780d49158fd56cc871f88730e
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Mon Apr 4 00:08:18 2011 -0700
+
+    [opcodes,pk,sim,xcc] add stop,utidx instructions
+
+commit 6145b13822b4147a24a3f548c06499a7131a6862
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sun Apr 3 23:54:56 2011 -0700
+
+    [opcodes,pk,sim,xcc] add fence instructions for vector unit
+
+commit 8520deaafcf2c607f8e064a1cd44f4df4c2ae11e
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Mar 25 19:02:37 2011 -0700
+
+    [opcodes] minor opcode changes
+
+commit c1a89d80555f51cf43d2c9120f2719fca4a30570
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Mar 25 17:44:06 2011 -0700
+
+    [sim,pk,xcc,opcodes] removed fminmag/fmaxmag
+
+commit 4baf0c99c55791ceb4ee70646e424fc5fa78ae27
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Mar 25 16:43:38 2011 -0700
+
+    [xcc,pk,opcodes,sim] updated encoding/insn names
+
+commit d9e887bd18aedc9b7c6cad1fd253a111a33426e2
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Thu Mar 24 18:55:59 2011 -0700
+
+    [pk] 32bit kernel + FPU emulation now compiles
+
+commit 9b215d8bb8d642f49fb8be43bfcd356641dc2329
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Mon Feb 14 23:44:13 2011 -0800
+
+    [xcc,opcodes,pk,sim] krste's re-renaming spree
+
+commit ee82a98e99fccff1fcb8d7cf6ed26c8599073bb4
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Mon Feb 14 21:17:49 2011 -0800
+
+    [xcc,sim,opcodes] removed mtflh/mffl/mffh
+    
+    in rv32 these will be replaced with loads and stores.
+
+commit 5c9d48945e6c62e77f22e32efcb963a56bf3dc74
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Fri Feb 4 16:09:47 2011 -0800
+
+    [sim,pk] added interrupt-pending field to cause reg
+
+commit af2d471a4e6c2e4551238a2cc209f9c0d997c82f
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Fri Feb 4 16:09:01 2011 -0800
+
+    [pk] fixed FP emulation bug
+    
+    kernel would erroneously trap on FP disabled
+
+commit 83cdb2063f62d4d535aebbaff484e068808e097b
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Feb 2 01:52:36 2011 -0800
+
+    [sim,xcc,opcodes] added back mtflh.d
+
+commit b8449c463eb8afe3782013c1f22d8425865ddb54
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Feb 2 01:31:07 2011 -0800
+
+    [opcodes,pk,sim,xcc] synci now bombs whole icache
+
+commit 4385a34442562b246038b13ef055e257030fd30e
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Feb 1 23:22:54 2011 -0800
+
+    [xcc,opcodes,pk,sim] cleanup to FP ISA
+    
+    - Added 5th rounding mode
+    - Removed MFCR/MTCR in favor of MFFSR/MTFSR (it was the only CR...)
+    - merged MTF.D with MTFLH.D; operation depends on RV32/RV64 mode
+    - made MFFL.D and MFFH.D illegal in RV64
+
+commit 9c3ff9eccdc398ddb5707a98793c5a2fdfb14f33
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Jan 25 22:56:38 2011 -0800
+
+    [sim,opcodes] add mulhsu instruction
+
+commit da568c7f5e3d60ce37091572affa815439ae932d
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Jan 25 22:51:24 2011 -0800
+
+    [opcodes,pk,sim,xcc] great renumbering of 2011, part deux
+
+commit 5a0bc797e3ced0e04e71e6e74fcb278ffc6e56b8
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Thu Jan 20 20:37:22 2011 -0800
+
+    [sim, pk, xcc, opcodes] great instruction renaming of 2011
+
+commit 99e15cd7071cc2e855ca6c6d372f6637d20606cf
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Jan 18 17:51:52 2011 -0800
+
+    [opcodes, sim, xcc] made *w insns illegal in RV32
+    
+    now generic variants behave differently in RV32 and RV64.
+
+commit dff73c1d184792adb317bd68bd381cd666c6f9d9
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Mon Jan 17 01:13:50 2011 -0800
+
+    [opcodes, pk, sim, xcc] removed nor, normalized macros to addi
+
+commit 0cf0242c3bb3fbd9aba37ca21325ea4d11b83f1b
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Mon Jan 10 16:35:20 2011 -0800
+
+    [pk] added --disable-fp-emulation option for code size
+
+commit b83d64df0179835678c54401ec88bd37e03e19ba
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Mon Jan 3 19:12:24 2011 -0800
+
+    [opcodes,pk,sim,xcc] flip fields to favor little endian
+
+commit 5490b1d62710f5cf485e3ccf711bc462b9a52623
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Dec 29 18:38:28 2010 -0800
+
+    [pk] send stdout/stderr to both fesvr and debug console
+
+commit 37ed1d3297fcb84c67040a9bcebbfc2274f62735
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Nov 9 23:23:53 2010 -0800
+
+    [pk] fixed memset bug
+
+commit 63729473a588960ade22d42b94bcd1fa7fb11e71
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Nov 9 15:31:00 2010 -0800
+
+    [opcodes, pk, sim, xcc] Tweaked FP encoding
+
+commit 3f0c7368c8fdc805bb1819c86128e46e9b18a200
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sat Nov 6 17:44:56 2010 -0700
+
+    [opcodes] generate latex and verilog correctly
+
+commit e45fd54d56efcf5407922ea3288475ef72b880a8
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Nov 5 17:08:01 2010 -0700
+
+    [pk] minor PK bugfix
+
+commit 783c0ec83143ad38cae2bf2aa86099fe4b4aa930
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Nov 5 16:46:36 2010 -0700
+
+    [pk] various PK cleanups/speedups
+
+commit 16a55362caca7f9bd5376eb1af20dbc3581159e2
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Nov 5 14:06:12 2010 -0700
+
+    [xcc, sim, pk, opcodes] new instruction encoding!
+
+commit 4daccfc1cf46ee25b73bc39dcc89844d696c6ec9
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Nov 2 16:00:37 2010 -0700
+
+    [xcc, sim, pk] link register is now x1
+
+commit 664411d5e692b487409dfb1c2ede9e214dd15602
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Nov 2 12:19:52 2010 -0700
+
+    [opcodes, pk, sim, xcc] made jumps shorter and PC-relative
+
+commit 9fe7d4f656dd3c6bfe6be17d2e48eacb59ad00f5
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Oct 26 02:20:44 2010 -0700
+
+    [pk,sim,xcc] get rid of at register, introduce tp register
+
+commit 6ba19295c02fc04ddba539ef13fb411d3587a799
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Mon Oct 25 19:41:39 2010 -0700
+
+    [sim,xcc,pk,opcodes] static rounding modes for FP insns
+    
+    Now, you can either use the RM in the FSR or specify it in the insn.
+    
+    (Except for FP->int; no dynamic for that.)
+
+commit f415fce4169219234281303e0735d44251e7edb8
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Wed Oct 20 16:28:44 2010 -0700
+
+    [pk] assume FSR exists even if FP is unsupported
+
+commit 77c382ff239f61ee9846a7abb6d96a6434b52b56
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Mon Oct 18 01:47:09 2010 -0700
+
+    [pk] improved performance of fp emulation
+
+commit 68879a67d0f49323e1e2f8358d19bc1d94bb9f30
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sun Oct 17 19:16:26 2010 -0700
+
+    Revert "[pk] restore correct value to $x1/$x2 after trap"
+    
+    This reverts commit c08c11ad7ea573313668b0231a18a5ea4515eea5.
+
+commit 992187797b90db0ac35ce8024dc36334548e2ce2
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sun Oct 17 19:10:40 2010 -0700
+
+    [pk] restore correct value to $x1/$x2 after trap
+
+commit 3b681865c61338cd600cce666866871d5966918e
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Sun Oct 17 16:47:11 2010 -0700
+
+    [pk] cleaned up FP initialization code
+
+commit 9297008e44254848cfa42726272640b641282665
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Sun Oct 17 14:08:12 2010 -0700
+
+    [pk] zero out fp regs
+
+commit b4fd490d689415205cf315c02f673b9386ece337
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Fri Oct 15 17:51:37 2010 -0700
+
+    [pk, sim] added FPU emulation support to proxy kernel
+
+commit 2b7fd5fa6ac24f3d6d6cb8f0d6c1c32b85c39f02
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Mon Oct 11 22:42:56 2010 -0700
+
+    [pk] no amos for now, add a sync before triggering the frontend
+
+commit 3aaacd44769a04e4aff3a3c788183e6a7fa75081
+Author: Andrew Waterman <waterman@s144.Millennium.Berkeley.EDU>
+Date:   Tue Oct 5 15:08:18 2010 -0700
+
+    [xcc,sim] eliminated vectored traps
+    
+    now, the evec register holds the address that all traps vector to,
+    and the cause register is set with the trap number.
+
+commit 74727add67bb5eea0fb6970dee1b44c415d6bbb4
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Sep 14 02:08:32 2010 -0700
+
+    [xcc] the great assembler cleanup, part 6
+    
+    Note that we get spurious warnings because gcc is still generating
+    such directives as .set noat and .set noreorder, which are now
+    meaningless.
+
+commit 5973faacb969f4a1b268abb960618f2e35495c1a
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Fri Sep 10 21:02:38 2010 -0700
+
+    [sim, pk] cleaned up exception vectors and FP exc flags
+
+commit 03e016c3d7909ffd2c162ec21dff61076442fa05
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Thu Sep 9 15:39:40 2010 -0700
+
+    [pk, sim] added interrupt support to sim; added timer interrupt
+
+commit 7fc9ae774bd8c64e53cb35fd88d467c7a18db55f
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Sep 7 00:29:40 2010 -0700
+
+    [pk] new register names
+
+commit d196c68c350419e4c7d872c6a0c10934e8b3bdc7
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Sep 7 00:28:58 2010 -0700
+
+    [pk] new register mappings
+
+commit 2351867c654572283c3c85b84e8f57e0021f9295
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Mon Sep 6 22:48:37 2010 -0700
+
+    [sim, xcc] added PCRs to replace k0 and k1
+
+commit fb6dba8fb1ac05bb1fea53cbdaa5d74c0fdb35b3
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Mon Sep 6 17:09:40 2010 -0700
+
+    [pk] use __sync_* builtins for atomics
+
+commit dd84f5743dd5527f08df7cebb1423149926eacdc
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Aug 24 02:22:20 2010 -0700
+
+    [pk] proxy kernel support for mixed 32b/64b operation
+
+commit 049091755596801479538bcc4722bc2810471aa0
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Aug 24 02:17:11 2010 -0700
+
+    [fesvr] added support for 32b and 64b ELFs
+
+commit 79a84855df0e7cc1aeba886d8e1d21487af6a3c1
+Author: Andrew Waterman <waterman@ubuntu.(none)>
+Date:   Sun Aug 22 21:25:41 2010 -0700
+
+    [pk] Fixed broken PK build process (moved boot into a .c file)
+
+commit 29cc0dc9854c66f12bd65e12516f68ccd9a741da
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Aug 18 18:24:55 2010 -0700
+
+    [pk,fesvr] improved proxykernel build system
+    
+    Now uses a modified MCPPBS.  Add --host=riscv to configure path.
+    
+    Front-end server now just searches PATH for riscv-pk, so just install the pk
+    to somewhere in your path.
+
+commit e97220c9bf519b8e0f0b131a4f868331c4d526fb
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Aug 4 18:31:04 2010 -0700
+
+    [xcc] Removed ctc1, cfc1 instructions; added fp move test case
+
+commit e0d20b2e2de069c6714f48eb36eec1ad02845f4c
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Aug 4 17:04:24 2010 -0700
+
+    [xcc,pk,sim] Added first part of FP support
+    
+    In particular, FP loads, stores, and moves now work.
+
+commit b93785370d0be893e0a484ec22f1365db184dcce
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Tue Aug 3 20:48:02 2010 -0700
+
+    [pk,sim,xcc] Renamed instructions to RISC-V spec
+    
+    All word-sized arithmetic operations are now postfixed with 'w',
+    and all double-word-sized arithmetic operations are no longer
+    prefixed with 'd'.  mtc0/mfc0 are removed and replaced with
+    mfpcr/mtpcr/mwfpcr/mwtpcr.
+
+commit 8b9b445a198d40e7076ca88c5aa742cd3dc72bd4
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Tue Aug 3 01:02:54 2010 -0700
+
+    [fesvr,pk,xcc] support argc and argv
+
+commit be79835df736494730107fb4a7385ccec1f067e1
+Author: Yunsup Lee <yunsup@cs.berkeley.edu>
+Date:   Thu Jul 22 18:37:13 2010 -0700
+
+    [pk] change fromhost loop condition
+
+commit 37ad02e28aed0dcf40cac02ae10d7dfc57df2e90
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Thu Jul 22 18:36:17 2010 -0700
+
+    [pk] fixed open syscall parameter being discarded
+
+commit 7fa95f96af5c2cca3aa635d858108c15f2c9da4f
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Thu Jul 22 03:34:25 2010 -0700
+
+    [pk,libgloss] added more front-end system calls
+
+commit 4680e0d2d01a6dd2722fc445c29d94209b1db31a
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Jul 21 23:30:28 2010 -0700
+
+    [pk,sim] removed cop0 console i/o support
+
+commit b24c0f1a1eafa6fe18164d0df81512d3ff42bc1f
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Wed Jul 21 20:12:09 2010 -0700
+
+    [pk,sim] first cut of appserver communication link
+
+commit 263c2ff7d8ae261fc2ee2dbf740ba048df9c956d
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Mon Jul 19 22:58:42 2010 -0700
+
+    [pk,sim] added temporary "exit" functionality
+
+commit 9c4398472919cff07e8cad82edc7b74ddc26498a
+Author: Andrew Waterman <waterman@s141.Millennium.Berkeley.EDU>
+Date:   Sun Jul 18 18:28:05 2010 -0700
+
+    Reorganized directory structure
+    
+    Moved cross-compiler to /xcc/ rather than /
+    Added ISA sim in /sim/
+    Added Proxy Kernel in /pk/ (to be cleaned up)
+    Added opcode map to /opcodes/ (ditto)
+    Added documentation to /doc/
