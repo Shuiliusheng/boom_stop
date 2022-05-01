@@ -523,6 +523,10 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   val getEvent = setEvent && (inst(31, 29) =/= 0.U)
   uop.setEvent := setEvent
 
+  when (setEvent) {
+    printf("decode setEvent, pc: 0x%x, inst: 0x%x, tag: %d\n", uop.debug_pc, uop.inst, inst(31, 20))
+  }
+
   //-------------------------------------------------------------
 
   uop.uopc       := cs.uopc

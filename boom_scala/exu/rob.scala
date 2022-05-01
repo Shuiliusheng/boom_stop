@@ -148,6 +148,8 @@ class CommitExceptionSignals(implicit p: Parameters) extends BoomBundle
 // The ROB needs to tell the FTQ if there's a pipeline flush (and what type)
 // so the FTQ can drive the frontend with the correct redirected PC.
   val flush_typ  = FlushTypes()
+
+  val isURet = Bool()
 }
 
 /**
@@ -567,8 +569,9 @@ class Rob(
   io.com_xcpt.bits.edge_inst := com_xcpt_uop.edge_inst
   io.com_xcpt.bits.is_rvc    := com_xcpt_uop.is_rvc
   io.com_xcpt.bits.pc_lob    := com_xcpt_uop.pc_lob
+  io.com_xcpt.bits.isURet    := false.B
 
-  val flush_commit_mask = Range(0,coreWidth).map{i => io.commit.valids(i) && io.commit.uops(i).flush_on_commit}
+  val flush_commit_mask = Range(0,coreWidth).map{i => io.commit.valids(i) && (io.commit.uops(i).flush_on_commit || (io.commit.uops(i).setEvent && io.commit.uops(i).inst(31, 20) === SetEvent_URet))}
   val flush_commit = flush_commit_mask.reduce(_|_)
   val flush_val = exception_thrown || flush_commit
 
@@ -583,6 +586,7 @@ class Rob(
   io.flush.bits.pc_lob    := flush_uop.pc_lob
   io.flush.bits.edge_inst := flush_uop.edge_inst
   io.flush.bits.is_rvc    := flush_uop.is_rvc
+  io.flush.bits.isURet    := flush_uop.setEvent && flush_uop.inst(31, 20) === SetEvent_URet
   io.flush.bits.flush_typ := FlushTypes.getType(flush_val,
                                                 exception_thrown && !is_mini_exception,
                                                 flush_commit && flush_uop.uopc === uopERET,

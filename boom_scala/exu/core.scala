@@ -370,7 +370,19 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val exitFuncAddr = RegInit(0.U(vaddrBitsExtended.W))
   val procMaxInsts = RegInit(0.U(64.W))
   val procRunningInsts = RegInit(0.U(64.W))
-  val overflow_insts = csr.io.status.prv === 0.U && procTag === 0x1234567.U && (procMaxInsts =/= 0.U) && (procRunningInsts > procMaxInsts)
+
+  val uscratch = RegInit(0.U(64.W))
+  val uretaddr = RegInit(0.U(64.W))
+  val exitNPC  = RegInit(0.U(64.W))
+  val maxPriv  = RegInit(0.U(2.W))
+
+  val tempReg1  = RegInit(0.U(64.W))
+  val tempReg2  = RegInit(0.U(64.W))
+  val tempReg3  = RegInit(0.U(64.W))
+
+
+  val workValid = csr.io.status.prv <= maxPriv && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
+  val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U
 
 
   //-------------------------------------------------------------
@@ -411,7 +423,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     new_ghist.ras_idx := io.ifu.get_pc(0).entry.ras_idx
     io.ifu.redirect_ghist := new_ghist
     when (FlushTypes.useCsrEvec(flush_typ)) {
-      when (overflow_insts && exitFuncAddr =/= 0.U ) {
+      when (overflow_insts) {
         io.ifu.redirect_pc  := exitFuncAddr
         procTag := 0.U
         procMaxInsts := 0.U
@@ -427,9 +439,14 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
                       + RegNext(rob.io.flush.bits.pc_lob)
                       - Mux(RegNext(rob.io.flush.bits.edge_inst), 2.U, 0.U))
       val flush_pc_next = flush_pc + Mux(RegNext(rob.io.flush.bits.is_rvc), 2.U, 4.U)
-      io.ifu.redirect_pc := Mux(FlushTypes.useSamePC(flush_typ),
-                                flush_pc, flush_pc_next)
 
+      when(RegNext(rob.io.flush.bits.isURet) && uretaddr =/= 0.U) {
+        io.ifu.redirect_pc := uretaddr
+        printf("uret redirect, target pc: 0x%x\n", io.ifu.redirect_pc)
+      }
+      .otherwise{
+        io.ifu.redirect_pc := Mux(FlushTypes.useSamePC(flush_typ), flush_pc, flush_pc_next)
+      }
     }
     io.ifu.redirect_ftq_idx := RegNext(rob.io.flush.bits.ftq_idx)
   } .elsewhen (brupdate.b2.mispredict && !RegNext(rob.io.flush.valid)) {
@@ -1024,7 +1041,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   // Extra I/O
   // Delay retire/exception 1 cycle
   csr.io.retire    := RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
-  csr.io.exception := RegNext(rob.io.com_xcpt.valid && !(overflow_insts && (exitFuncAddr =/= 0.U)))
+  csr.io.exception := RegNext(rob.io.com_xcpt.valid && !(overflow_insts))
   // csr.io.pc used for setting EPC during exception or CSR.io.trace.
 
   csr.io.pc        := (boom.util.AlignPCToBoundary(io.ifu.get_pc(0).com_pc, icBlockBytes)
@@ -1035,10 +1052,16 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   csr.io.ungated_clock := clock
 
   //chw: update execution insts
-  when (csr.io.status.prv === 0.U && procTag === 0x1234567.U && procMaxInsts =/= 0.U) { //usemode
+  when (workValid) { //usemode
     procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
+    when (procRunningInsts(9, 0) === 0.U){
+      printf("procRunningInsts: %d\n", procRunningInsts)
+    }
+  }
 
-    printf("procRunningInsts: %d\n", procRunningInsts)
+  when (overflow_insts && RegNext(rob.io.com_xcpt.valid) && csr.io.cause === (Causes.illegal_instruction).U) {
+    exitNPC := csr.io.pc
+    printf("overflow happen, npc: 0x%x\n", csr.io.pc)
   }
 
   val tval_valid = csr.io.exception &&
@@ -1121,6 +1144,13 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
             procMaxInsts := rs1_data 
             procRunningInsts := 0.U 
           }
+          is (SetEvent_UScratch)    { uscratch := rs1_data }
+          is (SetEvent_URetAddr)    { uretaddr := rs1_data }
+          is (SetEvent_MaxPriv)     { maxPriv  := rs1_data(1,0) }
+          is (SetEvent_Temp1)       { tempReg1 := rs1_data }
+          is (SetEvent_Temp2)       { tempReg2 := rs1_data }
+          is (SetEvent_Temp3)       { tempReg3 := rs1_data }
+
         }
         printf("csr.io.status.prv: %d\n", csr.io.status.prv)
         printf("setEvent, pc: 0x%x, inst: 0x%x, tag: %d, data: 0x%x\n", rrd_uop.debug_pc, rrd_uop.inst, tag, rs1_data)
@@ -1205,6 +1235,11 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
         val tag = wbresp.bits.uop.inst(31, 20)
         switch (tag) {
           is (ReadEvent_ProcTag)   { iregfile.io.write_ports(w_cnt).bits.data := Cat(0.U(32.W), procTag) }
+          is (ReadEvent_UScratch)  { iregfile.io.write_ports(w_cnt).bits.data := uscratch }
+          is (ReadEvent_ExitNPC)   { iregfile.io.write_ports(w_cnt).bits.data := exitNPC }
+          is (ReadEvent_Temp1)     { iregfile.io.write_ports(w_cnt).bits.data := tempReg1 }
+          is (ReadEvent_Temp2)     { iregfile.io.write_ports(w_cnt).bits.data := tempReg2 }
+          is (ReadEvent_Temp3)     { iregfile.io.write_ports(w_cnt).bits.data := tempReg3 }
         }
          printf("getEvent, pc: 0x%x, inst: 0x%x, tag: %d, ldst: %d, data: 0x%x\n", wbresp.bits.uop.debug_pc, wbresp.bits.uop.inst, tag, wbresp.bits.uop.ldst, procTag)
       }
