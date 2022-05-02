@@ -1,59 +1,89 @@
-#include<stdio.h>
-
-
-#define DEFINE_CSRR(s)                     \
-    static inline unsigned long long __csrr_##s()    \
-    {                                      \
-        unsigned long long value;                    \
-        __asm__ volatile("csrr    %0, " #s \
-                         : "=r"(value)     \
-                         :);               \
-        return value;                      \
-    }
-
-DEFINE_CSRR(cycle)
-DEFINE_CSRR(instret)
-
-#define SetSTemReg(src1, src2, src3, dst1) asm volatile( \
-    "mv t0, %[rtemp1]  # tag \n\t"  \
-    "addi x0, t0, 1 \n\t"  \
-    "mv t0, %[rtemp2]  # exit \n\t"  \
-    "addi x0, t0, 2 \n\t"  \
-    "mv t0, %[rtemp3]  # maxinst \n\t"  \
-    "addi x0, t0, 3 \n\t"  \
-    "addi x0, t1, 1025  # tag\n\t"  \
-    "mv %[wtemp1], t1  \n\t"  \
-    :[wtemp1]"=r"(dst1)  \
-    :[rtemp1]"r"(src1), [rtemp2]"r"(src2), [rtemp3]"r"(src3)  \
+#include "test.h"
+#include<unistd.h>
+#include<string.h>
+#define GetNPC(npc) asm volatile( \
+    "addi x0, t0, 1027 \n\t"  \
+    "mv %[npc], t0  # uretaddr \n\t"  \
+    : [npc]"=r"(npc)\
+    :  \
 ); 
 
-unsigned long long startcycle = 0, endcycle = 0;
-unsigned long long startinst = 0, endinst = 0;
+#define SetNPC(npc) asm volatile( \
+    "mv t0, %[npc]  # uretaddr \n\t"  \
+    "addi x0, t0, 5 \n\t"  \
+    : \
+    :[npc]"r"(npc)  \
+); 
+#define URet() asm volatile( \
+    "addi x0, x0, 128  # uret \n\t"  \
+); 
+
+
+unsigned long long intregs[32];
+unsigned long long necessaryRegs[1000];
+
+unsigned long long npc=0;
+unsigned long long exittime=0;
+unsigned long long tag=0x1234567;
+unsigned long long exitFucAddr=0x10626;
+unsigned long long maxinst=10000;
+
+char str[300];
+
+void display(int fd, char *buf, int size);
 
 void exit_fuc()
 {
+    Save_int_regs();
+    Load_necessary();
+
+    GetNPC(npc);
+    SetNPC(npc);
+    exittime++;
+
     endcycle = __csrr_cycle();
     endinst = __csrr_instret();
-    printf("exit function!\n");
-    printf("end: %ld %ld\n", endcycle, endinst);
-    printf("running: %ld %ld\n", endcycle-startcycle, endinst-startinst);
+    sprintf(str, "exit %d, cycles: %ld, inst: %ld\n", exittime, endcycle - startcycle, endinst - startinst);
+    display(1,str,strlen(str));
+    display(1,str,strlen(str));
+    display(1,str,strlen(str));
+    startcycle = endcycle;
+    startinst = endinst;
+
+    SetCtrlReg(tag, exitFucAddr, maxinst);
+    Load_regs();
+    URet();
+}
+
+//直接使用printf作为exit_fuc中的输出函数，会影响原本printf中的执行，从而导致出错，因此单独增加一个display的函数
+void display(int fd, char *buf, int size)
+{
+    asm volatile( 
+        "li	a7,64 \n\t"   
+        "ecall  \n\t"   
+    ); 
 }
 
 int main()
 {
-    unsigned long long tag=0x1234567;
-    unsigned long long exitFucAddr=0x1061a;
-    unsigned long long maxinst=8000;
-    unsigned long long d1=0;
+    unsigned long long t1 = (unsigned long long)&intregs[0];
+    unsigned long long t2 = (unsigned long long)&necessaryRegs[0];
+    unsigned long long t3 = 0;
+    necessaryRegs[0]=(unsigned long long)&necessaryRegs[400];
+    printf("t1: 0x%lx, t2: 0x%lx\n", t1, t2);
+    SetTempReg(t1, t2, t3);
+    Save_necessary();
+    
     startcycle = __csrr_cycle();
     startinst = __csrr_instret();
-    printf("start: %ld %ld\n", startcycle, startinst);
-
-    SetSTemReg(tag, exitFucAddr, maxinst, d1);
+    SetCtrlReg(tag, exitFucAddr, maxinst);
+    
 
     printf("hello world\n");
-    for(int i=0;i<1000;i++){
+    for(int i=0;i<10000;i++){
         printf("hello world: %d\n", i);
+        write(0,"hello write!", 13);
     }
+    printf("exittime: %d\n", exittime);
     return 0;
 }
