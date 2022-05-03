@@ -306,23 +306,7 @@ void asm_offsets(void)
 		- offsetof(struct task_struct, thread.fstate.f[0])
 	);
 	
-	DEFINE(TASK_THREAD_C0_RA, offsetof(struct task_struct, thread.counters[0]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C1_RA, offsetof(struct task_struct, thread.counters[1]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C2_RA, offsetof(struct task_struct, thread.counters[2]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C3_RA, offsetof(struct task_struct, thread.counters[3]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C4_RA, offsetof(struct task_struct, thread.counters[4]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C5_RA, offsetof(struct task_struct, thread.counters[5]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C6_RA, offsetof(struct task_struct, thread.counters[6]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C7_RA, offsetof(struct task_struct, thread.counters[7]) - offsetof(struct task_struct, thread.ra));
-
-	DEFINE(TASK_THREAD_C8_RA, offsetof(struct task_struct, thread.counters[8]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C9_RA, offsetof(struct task_struct, thread.counters[9]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C10_RA, offsetof(struct task_struct, thread.counters[10]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C11_RA, offsetof(struct task_struct, thread.counters[11]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C12_RA, offsetof(struct task_struct, thread.counters[12]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C13_RA, offsetof(struct task_struct, thread.counters[13]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C14_RA, offsetof(struct task_struct, thread.counters[14]) - offsetof(struct task_struct, thread.ra));
-	DEFINE(TASK_THREAD_C15_RA, offsetof(struct task_struct, thread.counters[15]) - offsetof(struct task_struct, thread.ra));
+	DEFINE(TASK_THREAD_TAG_RA, offsetof(struct task_struct, thread.threadtag) - offsetof(struct task_struct, thread.ra));
 	
 	/*
 	 * We allocate a pt_regs on the stack when entering the kernel.  This
