@@ -380,12 +380,13 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val tempReg2  = RegInit(0.U(64.W))
   val tempReg3  = RegInit(0.U(64.W))
 
+  val startInsts = RegInit(0.U(64.W))
+
 
   val isUserMode = csr.io.status.prv === 0.U && RegNext(csr.io.status.prv === 0.U) && RegNext(RegNext(csr.io.status.prv === 0.U))
   val workValid = isUserMode && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
   val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U
   val startCounter = csr.io.status.prv <= maxPriv && procTag === 0x1234567.U
-
 
   //-------------------------------------------------------------
   //perf counter
@@ -406,6 +407,13 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
       event_counters.io.reset_counter := true.B
       printf("reset perf counter, pc: 0x%x, tag: %d\n", uop.debug_pc, uop.inst(31, 20))
     }
+  }
+
+  //reset counter when running > start
+  when (workValid && startInsts =/= 0.U && procRunningInsts > startInsts) {
+    startInsts := 0.U
+    procRunningInsts := 0.U
+    event_counters.io.reset_counter := true.B
   }
 
   //connect signal to counters
@@ -1226,6 +1234,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
           is (SetEvent_Temp1)       { tempReg1 := rs1_data }
           is (SetEvent_Temp2)       { tempReg2 := rs1_data }
           is (SetEvent_Temp3)       { tempReg3 := rs1_data }
+          is (SetEvent_StartInsts)  { startInsts := rs1_data }
 
         }
         printf("csr.io.status.prv: %d\n", csr.io.status.prv)

@@ -12,6 +12,7 @@
     - tag = 7 : 设置temp1寄存器, temp1 = Reg[rs1]
     - tag = 8 : 设置temp2寄存器, temp2 = Reg[rs1]
     - tag = 9 : 设置temp3寄存器, temp3 = Reg[rs1]
+    - tag = 10 : 设置startInsts，用于控制程序执行到该数量的指令时，reset所有计数器
 
 
     - tag = 128 : uret功能，根据uretaddr进行跳转
@@ -24,6 +25,19 @@
     - tag = 1028 : 读取temp1寄存器, Reg[rs1] = temp1
     - tag = 1029 : 读取temp2寄存器, Reg[rs1] = temp2
     - tag = 1030 : 读取temp3寄存器, Reg[rs1] = temp3
+
+1.1 性能寄存器的读取和使用
+    - 增加了32个计数器，用于统计硬件中的事件
+    - 限制1：仅限于统计progTag=0x1234567进程的事件
+    - 限制2：用户自行设置需要统计的事件级别，
+        - SetCounterLevel(0) : 仅统计用户级事件的数量
+        - SetCounterLevel(1) : user + super
+        - SetCounterLevel(3) : user + super + machine
+    - 使用方法：
+        - reset: andi x0, t0, 64
+        - 读取计数器: andi x0, t0, 32-63  #用于读取第1-32个计数器到t0寄存器中
+    - 搭配使用：
+        - 程序在设置startinsts后，将在执行到该位置时，reset所有计数器
 
 
 2. 主要思路
