@@ -527,6 +527,14 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
     printf("decode setEvent, pc: 0x%x, inst: 0x%x, tag: %d\n", uop.debug_pc, uop.inst, inst(31, 20))
   }
 
+  val opCounter = (cs.uopc === uopANDI) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val readCounter = opCounter && (inst(25, 25) === 1.U)
+  uop.opCounter := opCounter
+
+  when (opCounter) {
+    printf("decode opCounter, pc: 0x%x, inst: 0x%x, tag: %d\n", uop.debug_pc, uop.inst, inst(31, 20))
+  }
+
   //-------------------------------------------------------------
 
   uop.uopc       := cs.uopc
@@ -536,7 +544,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   // x-registers placed in 0-31, f-registers placed in 32-63.
   // This allows us to straight-up compare register specifiers and not need to
   // verify the rtypes (e.g., bypassing in rename).
-  uop.ldst       := Mux(getEvent, inst(RS1_MSB,RS1_LSB), inst(RD_MSB,RD_LSB))
+  uop.ldst       := Mux(getEvent || readCounter, inst(RS1_MSB,RS1_LSB), inst(RD_MSB,RD_LSB))
   uop.lrs1       := inst(RS1_MSB,RS1_LSB)
   uop.lrs2       := inst(RS2_MSB,RS2_LSB)
   uop.lrs3       := inst(RS3_MSB,RS3_LSB)
@@ -575,7 +583,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   uop.is_fence   := cs.is_fence
   uop.is_fencei  := cs.is_fencei
   uop.is_sys_pc2epc   := cs.is_sys_pc2epc
-  uop.is_unique  := cs.inst_unique || setEvent
+  uop.is_unique  := cs.inst_unique || setEvent || opCounter
   uop.flush_on_commit := cs.flush_on_commit || (csr_en && !csr_ren && io.csr_decode.write_flush)
 
   uop.bypassable   := cs.bypassable

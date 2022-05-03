@@ -36,6 +36,7 @@ class MicroOp(implicit p: Parameters) extends BoomBundle
 
   //chw
   val setEvent         = Bool()
+  val opCounter        = Bool()
 
   val uopc             = UInt(UOPC_SZ.W)       // micro-op code
   val inst             = UInt(32.W)
