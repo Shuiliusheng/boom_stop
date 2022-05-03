@@ -381,7 +381,8 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val tempReg3  = RegInit(0.U(64.W))
 
 
-  val workValid = RegNext(RegNext(csr.io.status.prv <= maxPriv)) && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
+  val isUserMode = csr.io.status.prv === 0.U && RegNext(csr.io.status.prv === 0.U) && RegNext(RegNext(csr.io.status.prv === 0.U))
+  val workValid = isUserMode && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
   val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U
 
 
@@ -423,7 +424,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     new_ghist.ras_idx := io.ifu.get_pc(0).entry.ras_idx
     io.ifu.redirect_ghist := new_ghist
     when (FlushTypes.useCsrEvec(flush_typ)) {
-      when (overflow_insts && RegNext(rob.io.com_xcpt.bits.cause === (Causes.illegal_instruction).U)) {
+      when (isUserMode && overflow_insts && RegNext(rob.io.com_xcpt.bits.cause === (Causes.illegal_instruction).U)) {
         io.ifu.redirect_pc  := exitFuncAddr
         procTag := 0.U
         procMaxInsts := 0.U
