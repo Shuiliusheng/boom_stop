@@ -44,9 +44,9 @@ void exit_fuc()
     endcycle = __csrr_cycle();
     endinst = __csrr_instret();
     sprintf(str, "exit %d, cycles: %ld, inst: %ld\n", exittime, endcycle - startcycle, endinst - startinst);
-    display(1,str,strlen(str));
-    display(1,str,strlen(str));
-    display(1,str,strlen(str));
+    write(1,str,strlen(str));
+    // exit(1);
+
     startcycle = endcycle;
     startinst = endinst;
 
@@ -74,15 +74,18 @@ int main()
     SetTempReg(t1, t2, t3);
     Save_necessary();
     
+//    printf("intput max insts: ");
+  //  scanf("%d", &maxinst);
+
     startcycle = __csrr_cycle();
     startinst = __csrr_instret();
     SetCtrlReg(tag, exitFucAddr, maxinst);
-    
+
+
 
     printf("hello world\n");
     for(int i=0;i<10000;i++){
         printf("hello world: %d\n", i);
-        write(0,"hello write!", 13);
     }
     printf("exittime: %d\n", exittime);
     return 0;
