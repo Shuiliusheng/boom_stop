@@ -208,22 +208,9 @@ class RenameStage(
   //-------------------------------------------------------------
   // Rename Structures
 
-  val maptable = Module(new RenameMapTable(
-    plWidth,
-    32,
-    numPhysRegs,
-    false,
-    float))
-  val freelist = Module(new RenameFreeList(
-    plWidth,
-    numPhysRegs,
-    if (float) 32 else 31))
-  val busytable = Module(new RenameBusyTable(
-    plWidth,
-    numPhysRegs,
-    numWbPorts,
-    false,
-    float))
+  val maptable = Module(new RenameMapTable(plWidth, if (float) 32 else 36, numPhysRegs, false, float))
+  val freelist = Module(new RenameFreeList(plWidth, numPhysRegs, if (float) 32 else 36))
+  val busytable = Module(new RenameBusyTable(plWidth, numPhysRegs, numWbPorts, false, float))
 
 
 
