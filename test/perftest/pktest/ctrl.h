@@ -14,7 +14,7 @@ unsigned long long necessaryRegs[1000];
 unsigned long long npc=0, exittime=0;
 unsigned long long procTag=0x1234567;
 unsigned long long exitFucAddr=0x10828;
-unsigned long long maxinst=10000;
+unsigned long long maxinst=10000, warmupinst=1000;
 char str_temp[300];
 
 unsigned long long startcycle = 0, endcycle = 0;
@@ -40,8 +40,8 @@ void exit_fuc()
 
     startcycle = endcycle;
     startinst = endinst;
-    
-    SetCtrlReg(procTag, exitFucAddr, maxinst);
+    warmupinst = 0;
+    SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst);
     Load_int_regs();
     URet();
 }
@@ -61,7 +61,7 @@ __attribute((constructor)) void init_start()
     // scanf("%d", &maxinst);
 
 	RESET_COUNTER;
-    SetCtrlReg(procTag, exitFucAddr, maxinst);
+    SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst);
 }
 
 void exit_record()
@@ -75,6 +75,8 @@ void exit_record()
 		sprintf(str_temp, "event %2d: exit_value: %10llu\n", n, exit_values[n]);
         write(1, str_temp, strlen(str_temp));
     }
+
+    RESET_COUNTER;
 }
 
 #endif 

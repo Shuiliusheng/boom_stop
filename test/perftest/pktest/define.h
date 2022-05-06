@@ -29,15 +29,17 @@
 ); 
 
 
-#define SetCtrlReg(tag, exitFucAddr, maxinst) asm volatile( \
+#define SetCtrlReg(tag, exitFucAddr, maxinst, startinst) asm volatile( \
     "mv t0, %[rtemp1]  # tag \n\t"  \
     "addi x0, t0, 1 \n\t"  \
     "mv t0, %[rtemp2]  # exit \n\t"  \
     "addi x0, t0, 2 \n\t"  \
     "mv t0, %[rtemp3]  # maxinst \n\t"  \
     "addi x0, t0, 3 \n\t"  \
+    "mv t0, %[rtemp4]  # startinst \n\t"  \
+    "addi x0, t0, 10 \n\t"  \
     : \
-    :[rtemp1]"r"(tag), [rtemp2]"r"(exitFucAddr), [rtemp3]"r"(maxinst)  \
+    :[rtemp1]"r"(tag), [rtemp2]"r"(exitFucAddr), [rtemp3]"r"(maxinst), [rtemp4]"r"(startinst)\
 ); 
 
 
