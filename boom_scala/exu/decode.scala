@@ -543,7 +543,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
 
   //--------------------------------------------  -----------------
 
-  uop.uopc       := Mux(jmpTempReg, uopJALR, cs.uopc)
+  uop.uopc       := Mux(jmpTempReg, uopJALR, Mux(getTempReg || setTempReg, uopADD, cs.uopc))
   uop.iq_type    := cs.iq_type
   uop.fu_code    := Mux(jmpTempReg, FU_JMP, cs.fu_code)
 

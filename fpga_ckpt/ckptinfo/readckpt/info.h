@@ -19,7 +19,7 @@
 #define StoreIntRegAddr "0x150028"
 #define OldIntRegAddr   "0x150228"
 
-#define TakeOverAddr 0x10666
+#define TakeOverAddr 0x1066a
 
 #define ECall_Replace 0x00104033
 #define Cause_ExitSysCall 1

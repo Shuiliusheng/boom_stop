@@ -17,16 +17,25 @@ echo ${objdump} -d ${target}
 ${objdump} -d ${target} >read.s
 
 # find the takeOversyscall entry point place
+echo "replace TakeOverAddr in info.h with new value"
 temp=`grep -r "<_Z15takeoverSyscallv>:" read.s -A 10 |grep "zero,a0,sp"`
+entry=`echo $temp|awk -F ':' '{print $1}' |awk -F ' ' '{print $1}'`
+sed -i "s/#define TakeOverAddr.*/#define TakeOverAddr 0x$entry/g" info.h
 echo $temp
 grep -r "#define TakeOverAddr" info.h
 
-entry=`echo $temp|awk -F ':' '{print $1}' |awk -F ' ' '{print $1}'`
-sed -i "s/#define TakeOverAddr.*/#define TakeOverAddr 0x$entry/g" info.h
+
+# 获取exit_fuc的入口地址
+echo ""
+echo "replace exitFucAddr in ctrl.h with new value"
+exit_fuc_tag="zero,a0,4"
+line=`grep -r exit_fuc read.s -A 10 | grep "$exit_fuc_tag"`
+exit_fuc_pc=`echo $line | awk -F ':' '{print $1}' | awk -F ' ' '{print $1}'`
+# 替换ctrl.h中关于入口地址的设定
+sed -i "s/unsigned long long exitFucAddr.*/unsigned long long exitFucAddr=0x$exit_fuc_pc;/g" ctrl.h
+echo $line
+grep -r "unsigned long long exitFucAddr"  ctrl.h
 
 #recompile
 ${cc} $filelist $flags $dflags -o ${target}
 ${objdump} -d ${target} >read.s
-
-
-
