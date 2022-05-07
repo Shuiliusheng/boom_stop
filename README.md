@@ -39,6 +39,15 @@
     - 搭配使用：
         - 程序在设置startinsts后，将在执行到该位置时，reset所有计数器
 
+1.2 ckpt的使用
+    - fpga_ckpt中提供了生成和使用checkpoint的教程，主要是从项目gem5_riscv_ckpt中复制并简单修改过来的
+    - 通过利用maxinst和warmup的机制，我们能够更加准确的控制ckpt的开始和结束
+    - 通过搭配32个计数器，在warmup结束之后开始计数，将能够得到详细的ckpt内的事件信息
+    - boom支持ckpt需要做出的改变：扩展32个逻辑寄存器到36个，即增加四个临时寄存器，用于读写和跳转使用
+        - 读：and x0, rd, rtemp   # REG[rd] = REG[rtemp]
+        - 写：sll x0, rs1, rtemp  # REG[rtemp] = REG[rs1]
+        - 跳转：or x0, x0, rtemp  # jump to REG[rtemp]
+
 
 2. 主要思路
     - 在硬件中识别特定的procTag (0x1234567)，并且仅统计该标记的进程在用户态情况下执行的指令数
