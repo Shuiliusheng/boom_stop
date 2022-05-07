@@ -53,12 +53,42 @@
         - exitFuncAddr为程序内某个函数的地址，用户处理退出时的信息打印等情况
     - 
 
-3. 具体使用
-    - 包含example/pfc_asm.h头文件
-    - start_record函数会自动在main函数之前被调用执行，因此可以在该函数对一些特殊寄存器进行设置
+3. 具体使用: example中存在一个示例
+    - 将define.h 和 ctrl.h为必须存在的两个头文件
+    - ctrl.h的start_record函数会自动在main函数之前被调用执行，因此可以在该函数对一些特殊寄存器进行设置
     - exit_fuc函数是给出的一个示例函数，用于处理达到最大指令数的信息收集和输出
 
 
-##  note
-- 如果想测试riscv-test，就需要将core.scala的csr.io.status.prv === 0.U 改为 3.U
-    - 0.U: user, 3.U: machine
+4. 目前32个计数器对应的事件
+    - event 0,  cycles
+    - event 1,  commit_insts
+    - event 2,  icache_access_num
+    - event 3,  icache_miss_num
+    - event 4,  itlb_miss_num
+    - event 5,  npc_use_f1
+    - event 6,  npc_use_f2
+    - event 7,  npc_use_f3
+    - event 8,  npc_use_core
+    - event 9,  fb_no_output
+    - event 10, fb_one_output
+    - event 11, brmask_full_cycles 
+    - event 12, rename_stall_insts
+    - event 13, dis_ldq_stall_insts
+    - event 14, dis_stq_stall_insts
+    - event 15, dis_rob_stall_insts
+    - event 16, issue_insts
+    - event 17, misspec_iss_insts
+    - event 18, dcache_access_num
+    - event 19, dcache_nack_num
+    - event 20, dcache_to_nextlevel
+    - event 21, dtlb_access_num
+    - event 22, dtlb_miss_num
+    - event 23, dtlb_ptw_num
+    - event 24, l2tlb_miss_num
+    - event 25, misalign_excpt
+    - event 26, lstd_pagefault
+    - event 27, fetch_pagefault
+    - event 28, mini_exception
+    - event 29, branch_mis_num
+    - event 30, jalr_mis_num
+    - event 31, rollback_cycles

@@ -14,7 +14,7 @@ unsigned long long necessaryRegs[1000];
 unsigned long long npc=0, exittime=0;
 unsigned long long procTag=0x1234567;
 unsigned long long exitFucAddr=0x10828;
-unsigned long long maxinst=10000, warmupinst=1000;
+unsigned long long maxinst=100000, warmupinst=1000;
 char str_temp[300];
 
 unsigned long long startcycle = 0, endcycle = 0;
@@ -89,11 +89,11 @@ __attribute((constructor)) void init_start()
 void exit_record()
 {
 	int n=0;
-	for(n=0;n<8;n++){
+	for(n=0;n<32;n++){
 		exit_values[n]=read_counter(n);
 	}
 
-	for(n=0;n<8;n++){
+	for(n=0;n<32;n++){
 		sprintf(str_temp, "{\"type\": \"event %2d\", \"value\": %10llu\n", n, exit_values[n]);
         write(1, str_temp, strlen(str_temp));
     }

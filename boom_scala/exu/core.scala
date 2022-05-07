@@ -370,6 +370,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val exitFuncAddr = RegInit(0.U(vaddrBitsExtended.W))
   val procMaxInsts = RegInit(0.U(64.W))
   val procRunningInsts = RegInit(0.U(64.W))
+  val startInsts = RegInit(0.U(64.W))
 
   val uscratch = RegInit(0.U(64.W))
   val uretaddr = RegInit(0.U(64.W))
@@ -380,13 +381,15 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val tempReg2  = RegInit(0.U(64.W))
   val tempReg3  = RegInit(0.U(64.W))
 
-  val startInsts = RegInit(0.U(64.W))
-
-
   val isUserMode = csr.io.status.prv === 0.U && RegNext(csr.io.status.prv === 0.U) && RegNext(RegNext(csr.io.status.prv === 0.U))
   val workValid = isUserMode && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
-  val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U
+  val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U && startInsts === 0.U
   val startCounter = csr.io.status.prv <= maxPriv && procTag === 0x1234567.U
+
+  //chw: update execution insts
+  when (workValid) { //usemode
+    procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
+  }
 
   //-------------------------------------------------------------
   //perf counter
@@ -416,43 +419,76 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     event_counters.io.reset_counter := true.B
   }
 
+  
+  //there is no inst could be decoded
+  val dec_fbundle_vals = Wire(Vec(coreWidth, Bool()))
+  val dec_none_inst = !io.ifu.fetchpacket.valid
+  val dec_one_inst = dec_fbundle_vals.asUInt === 1.U
+
+  //ldq stall or stq stall widthMap(w => dtlb.io.req(w).valid)
+  val ldq_dis_stall = Wire(Vec(coreWidth, Bool()))
+  val stq_dis_stall = Wire(Vec(coreWidth, Bool())) 
+  val rob_dis_stall = !rob.io.ready
+
+  for(w <- 0 until coreWidth) {
+    dec_fbundle_vals(w) := io.ifu.fetchpacket.bits.uops(w).valid
+    ldq_dis_stall(w) := io.lsu.ldq_full(w) && dis_uops(w).uses_ldq
+    stq_dis_stall(w) := io.lsu.stq_full(w) && dis_uops(w).uses_stq
+  }
+
+  //issue information
+  //有效的issue信号，但是ld发生miss，并且由此而引发推测唤醒的失效
+  val spec_miss_issuop = Wire(Vec(exe_units.numIrfReaders, Bool()))
+  for(w <- 0 until exe_units.numIrfReaders) {
+    spec_miss_issuop(w) := iss_valids(w) && (io.lsu.ld_miss && (iss_uops(w).iw_p1_poisoned || iss_uops(w).iw_p2_poisoned))
+  }
+
+  //exception information
+  val misalign_excpt = csr.io.exception && (csr.io.cause === Causes.misaligned_load.U || csr.io.cause === Causes.misaligned_store.U)
+  val lstd_pagefault = csr.io.exception && (csr.io.cause === Causes.load_page_fault.U || csr.io.cause === Causes.store_page_fault.U)
+  val fetch_pagefault = csr.io.exception && (csr.io.cause === Causes.fetch_page_fault.U)
+  val mini_exception = RegNext(rob.io.flush.valid && !rob.io.com_xcpt.valid && rob.io.com_xcpt.bits.cause === MINI_EXCEPTION_MEM_ORDERING)
+
   //connect signal to counters
   when (startCounter) {
     event_counters.io.event_signals_l(0) := 1.U  //cycles
     event_counters.io.event_signals_l(1) := RegNext(PopCount(rob.io.commit.arch_valids.asUInt)) // commit inst
-    event_counters.io.event_signals_l(2) := Mux(io.ifu.perf.acquire, 1.U, 0.U) //i-cache miss
-    event_counters.io.event_signals_l(3) := Mux(io.lsu.perf.acquire, 1.U, 0.U) //d-cache miss
+    
+    event_counters.io.event_signals_l(2) := Mux(io.ifu.icache_valid_access, 1.U, 0.U) //i-cache valid access number
+    event_counters.io.event_signals_l(3) := Mux(io.ifu.perf.acquire, 1.U, 0.U) //i-cache miss
     event_counters.io.event_signals_l(4) := Mux(io.ifu.perf.tlbMiss, 1.U, 0.U) //i-tlb miss
-    event_counters.io.event_signals_l(5) := Mux(io.lsu.perf.tlbMiss, 1.U, 0.U) //d-tlb miss
-    event_counters.io.event_signals_l(6) := Mux(io.ptw.perf.l2miss, 1.U, 0.U) //L2 TLB miss
-    event_counters.io.event_signals_l(7) := Mux(b2.mispredict, 1.U, 0.U) //bp mis-prediction
+    event_counters.io.event_signals_l(5) := Mux(io.ifu.bpsrc_f1, 1.U, 0.U) // npc use f1
+    event_counters.io.event_signals_l(6) := Mux(io.ifu.bpsrc_f2, 1.U, 0.U) // npc use f2
+    event_counters.io.event_signals_l(7) := Mux(io.ifu.bpsrc_f3, 1.U, 0.U) // npc use f3
+    event_counters.io.event_signals_l(8) := Mux(io.ifu.bpsrc_core, 1.U, 0.U) // npc use core information
+    
+    event_counters.io.event_signals_l(9)  := Mux(dec_none_inst, 1.U, 0.U)  //no inst need to be decoded
+    event_counters.io.event_signals_l(10) := Mux(dec_one_inst, 1.U, 0.U)   //only one inst need to be decoded
+    event_counters.io.event_signals_l(11) := PopCount(dec_brmask_logic.io.is_full.asUInt)   //br mask full times 
+    
+    event_counters.io.event_signals_l(12) := PopCount(ren_stalls.asUInt)   //rename stall number
 
-    event_counters.io.event_signals_l(8) := 1.U  //cycles
-    event_counters.io.event_signals_l(9) := RegNext(PopCount(rob.io.commit.arch_valids.asUInt)) // commit inst
-    event_counters.io.event_signals_l(10) := Mux(io.ifu.perf.acquire, 1.U, 0.U) //i-cache miss
-    event_counters.io.event_signals_l(11) := Mux(io.lsu.perf.acquire, 1.U, 0.U) //d-cache miss
-    event_counters.io.event_signals_l(12) := Mux(io.ifu.perf.tlbMiss, 1.U, 0.U) //i-tlb miss
-    event_counters.io.event_signals_l(13) := Mux(io.lsu.perf.tlbMiss, 1.U, 0.U) //d-tlb miss
-    event_counters.io.event_signals_l(14) := Mux(io.ptw.perf.l2miss, 1.U, 0.U) //L2 TLB miss
-    event_counters.io.event_signals_l(15) := Mux(b2.mispredict, 1.U, 0.U) //bp mis-prediction
+    event_counters.io.event_signals_l(13) := PopCount(ldq_dis_stall.asUInt) //ldq dispatch stall times
+    event_counters.io.event_signals_l(14) := PopCount(stq_dis_stall.asUInt) //ldq dispatch stall times
+    event_counters.io.event_signals_l(15) := Mux(rob_dis_stall, coreWidth.U, 0.U) //rob dispatch stall times
 
-    event_counters.io.event_signals_h(0) := 1.U  //cycles
-    event_counters.io.event_signals_h(1) := RegNext(PopCount(rob.io.commit.arch_valids.asUInt)) // commit inst
-    event_counters.io.event_signals_h(2) := Mux(io.ifu.perf.acquire, 1.U, 0.U) //i-cache miss
-    event_counters.io.event_signals_h(3) := Mux(io.lsu.perf.acquire, 1.U, 0.U) //d-cache miss
-    event_counters.io.event_signals_h(4) := Mux(io.ifu.perf.tlbMiss, 1.U, 0.U) //i-tlb miss
-    event_counters.io.event_signals_h(5) := Mux(io.lsu.perf.tlbMiss, 1.U, 0.U) //d-tlb miss
-    event_counters.io.event_signals_h(6) := Mux(io.ptw.perf.l2miss, 1.U, 0.U) //L2 TLB miss
-    event_counters.io.event_signals_h(7) := Mux(b2.mispredict, 1.U, 0.U) //bp mis-prediction
+    event_counters.io.event_signals_h(0) := PopCount(iss_valids.asUInt)         //valid issue uop counter
+    event_counters.io.event_signals_h(1) := PopCount(spec_miss_issuop.asUInt)  //valid mis wakeup issue uop counter
+    event_counters.io.event_signals_h(2) := io.lsu.dcache_valid_access            //valid dcache access number
+    event_counters.io.event_signals_h(3) := io.lsu.dcache_nack_num             //d-cache load & store nack number
+    event_counters.io.event_signals_h(4) := Mux(io.lsu.perf.acquire, 1.U, 0.U) //dcache send req to next level number
+    event_counters.io.event_signals_h(5) := io.lsu.dtlb_valid_access          //valid dtlb req number
+    event_counters.io.event_signals_h(6) := io.lsu.dtlb_miss_num              //dtlb miss number
+    event_counters.io.event_signals_h(7) := Mux(io.lsu.perf.tlbMiss, 1.U, 0.U) //d-tlb miss
 
-    event_counters.io.event_signals_h(8) := 1.U  //cycles
-    event_counters.io.event_signals_h(9) := RegNext(PopCount(rob.io.commit.arch_valids.asUInt)) // commit inst
-    event_counters.io.event_signals_h(10) := Mux(io.ifu.perf.acquire, 2.U, 0.U) //i-cache miss
-    event_counters.io.event_signals_h(11) := Mux(io.lsu.perf.acquire, 2.U, 0.U) //d-cache miss
-    event_counters.io.event_signals_h(12) := Mux(io.ifu.perf.tlbMiss, 2.U, 0.U) //i-tlb miss
-    event_counters.io.event_signals_h(13) := Mux(io.lsu.perf.tlbMiss, 2.U, 0.U) //d-tlb miss
-    event_counters.io.event_signals_h(14) := Mux(io.ptw.perf.l2miss, 2.U, 0.U) //L2 TLB miss
-    event_counters.io.event_signals_h(15) := Mux(b2.mispredict, 2.U, 0.U) //bp mis-prediction
+    event_counters.io.event_signals_h(8)  := Mux(io.ptw.perf.l2miss, 1.U, 0.U) //L2 TLB miss
+    event_counters.io.event_signals_h(9)  := Mux(misalign_excpt, 1.U, 0.U) // mis aligned load & store exception number
+    event_counters.io.event_signals_h(10) := Mux(lstd_pagefault, 1.U, 0.U) //load store caused page fault number
+    event_counters.io.event_signals_h(11) := Mux(fetch_pagefault, 1.U, 0.U) //fetch caused page fault number
+    event_counters.io.event_signals_h(12) := Mux(mini_exception, 1.U, 0.U) //load store wrong prediction cause mini exception
+    event_counters.io.event_signals_h(13) := Mux(b2.mispredict, 1.U, 0.U) //bp mis-prediction
+    event_counters.io.event_signals_h(14) := Mux(b2.mispredict && b2.cfi_type === CFI_JALR, 1.U, 0.U) //bp mis-prediction caused by jalr
+    event_counters.io.event_signals_h(15) := Mux(rob.io.commit.rollback, 1.U, 0.U) //rob rollback cycles
   }
   .otherwise {
     for (w <- 0 until 16) {
@@ -1128,14 +1164,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   csr.io.cause     := RegNext(rob.io.com_xcpt.bits.cause)
   csr.io.ungated_clock := clock
 
-  //chw: update execution insts
-  when (workValid) { //usemode
-    procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
-    when (procRunningInsts(9, 0) === 0.U){
-      printf("procRunningInsts: %d\n", procRunningInsts)
-    }
-  }
-
+  //set exit npc
   when (overflow_insts && RegNext(rob.io.com_xcpt.valid) && csr.io.cause === (Causes.illegal_instruction).U) {
     exitNPC := csr.io.pc
     printf("overflow happen, npc: 0x%x\n", csr.io.pc)
