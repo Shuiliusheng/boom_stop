@@ -536,30 +536,32 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   }
 
   //-------------------------------------------------------------
-  val getTempReg = (cs.uopc === uopAND) && (inst(RD_MSB,RD_LSB) === 0.U)
-  val setTempReg = (cs.uopc === uopSLL) && (inst(RD_MSB,RD_LSB) === 0.U)
-  val jmpTempReg = (cs.uopc === uopXOR) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val opTempReg  = (cs.uopc === uopORI) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val getTempReg = opTempReg && (inst(23, 22) === 1.U)
+  val setTempReg = opTempReg && (inst(23, 22) === 2.U)
+  val jmpTempReg = opTempReg && (inst(23, 22) === 3.U)
+  val rtemp = WireInit(0.U(6.W))
+  rtemp := Cat(1.U(1.W), Cat(0.U(3.W), inst(21, 20)))
 
-
-  //--------------------------------------------  -----------------
+  //-------------------------------------------------------------
 
   uop.uopc       := Mux(jmpTempReg, uopJALR, Mux(getTempReg || setTempReg, uopADD, cs.uopc))
   uop.iq_type    := cs.iq_type
   uop.fu_code    := Mux(jmpTempReg, FU_JMP, cs.fu_code)
 
+
   // x-registers placed in 0-31, f-registers placed in 32-63.
   // This allows us to straight-up compare register specifiers and not need to
   // verify the rtypes (e.g., bypassing in rename).
-  uop.ldst       := Mux(jmpTempReg, 0.U, Mux(getEvent || readCounter || getTempReg, inst(RS1_MSB,RS1_LSB), Mux(setTempReg, Cat(1.U(1.W), inst(RS2_MSB,RS2_LSB)), inst(RD_MSB,RD_LSB))))
-  uop.lrs1       := Mux(jmpTempReg, Cat(1.U(1.W), inst(RS2_MSB,RS2_LSB)), 
-                    Mux(getTempReg, 0.U, inst(RS1_MSB,RS1_LSB)))
-  uop.lrs2       := Mux(getTempReg, Cat(1.U(1.W), inst(RS2_MSB,RS2_LSB)), Mux(setTempReg, 0.U, inst(RS2_MSB,RS2_LSB)))
+  uop.ldst       := Mux(jmpTempReg, 0.U, Mux(getEvent || readCounter || getTempReg, inst(RS1_MSB,RS1_LSB), Mux(setTempReg, rtemp, inst(RD_MSB,RD_LSB))))
+  uop.lrs1       := Mux(jmpTempReg, rtemp, Mux(getTempReg, 0.U, inst(RS1_MSB,RS1_LSB)))
+  uop.lrs2       := Mux(getTempReg, rtemp, Mux(setTempReg, 0.U, inst(RS2_MSB,RS2_LSB)))
   uop.lrs3       := inst(RS3_MSB,RS3_LSB)
 
   uop.ldst_val   := cs.dst_type =/= RT_X && !(uop.ldst === 0.U && uop.dst_rtype === RT_FIX)
   uop.dst_rtype  := cs.dst_type
   uop.lrs1_rtype := cs.rs1_type
-  uop.lrs2_rtype := Mux(jmpTempReg, RT_X, cs.rs2_type)
+  uop.lrs2_rtype := Mux(jmpTempReg, RT_X, Mux(setTempReg || getTempReg, RT_FIX, cs.rs2_type))
   uop.frs3_en    := cs.frs3_en
 
   uop.ldst_is_rs1 := uop.is_sfb_shadow
@@ -600,7 +602,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
 
   // repackage the immediate, and then pass the fewest number of bits around
   val di24_20 = Mux(cs.imm_sel === IS_B || cs.imm_sel === IS_S, inst(11,7), inst(24,20))
-  uop.imm_packed := Mux(jmpTempReg, 0.U, Cat(inst(31,25), di24_20, inst(19,12)))
+  uop.imm_packed := Mux(jmpTempReg || setTempReg || getTempReg, 0.U, Cat(inst(31,25), di24_20, inst(19,12)))
 
   //-------------------------------------------------------------
 
