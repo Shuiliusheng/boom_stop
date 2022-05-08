@@ -26,6 +26,24 @@
     - tag = 1029 : 读取temp2寄存器, Reg[rs1] = temp2
     - tag = 1030 : 读取temp3寄存器, Reg[rs1] = temp3
 
+    ```c
+        #define SetProcTag(srcreg)          "addi x0, " srcreg ", 1 \n\t"  
+        #define SetExitFuncAddr(srcreg)     "addi x0, " srcreg ", 2 \n\t"  
+        #define SetMaxInsts(srcreg)         "addi x0, " srcreg ", 3 \n\t"  
+        #define SetUScratch(srcreg)         "addi x0, " srcreg ", 4 \n\t" 
+        #define SetURetAddr(srcreg)         "addi x0, " srcreg ", 5 \n\t"  
+        #define SetMaxPriv(srcreg)          "addi x0, " srcreg ", 6 \n\t"  
+        #define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" rtemp " \n\t"  
+        #define SetStartInsts(srcreg)       "addi x0, " srcreg ", 10 \n\t"   
+
+        #define GetProcTag(dstreg)          "addi x0, " dstreg ", 1025 \n\t"  
+        #define GetUScratch(dstreg)         "addi x0, " dstreg ", 1026 \n\t"  
+        #define GetExitNPC(dstreg)          "addi x0, " dstreg ", 1027 \n\t"  
+        #define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" rtemp " \n\t"  
+
+        #define URet() asm volatile( "addi x0, x0, 128  # uret \n\t" ); 
+    ```
+
 1.1 性能寄存器的读取和使用
     - 增加了32个计数器，用于统计硬件中的事件
     - 限制1：仅限于统计progTag=0x1234567进程的事件
@@ -47,6 +65,11 @@
         - 读：ori x0, rs1, #4-7   # REG[rs1] = REG[0, 1, 2, 3]
         - 写：ori x0, rs1, #8-11  # REG[0, 1, 2, 3] = REG[rs1]
         - 跳转：ori x0, x0, #12-15  # jump to REG[0, 1, 2, 3]
+        ```c
+            #define WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" rtempnum " \n\t"
+            #define ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" rtempnum " \n\t"
+            #define JmpRTemp(rtempnum) "ori x0, x0, 12+" rtempnum " \n\t"
+        ```
 
 
 2. 主要思路

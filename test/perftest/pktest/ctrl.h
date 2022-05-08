@@ -13,7 +13,7 @@ unsigned long long necessaryRegs[1000];
 
 unsigned long long npc=0, exittime=0;
 unsigned long long procTag=0x1234567;
-unsigned long long exitFucAddr=0x10828;
+unsigned long long exitFucAddr=0x107e8;
 unsigned long long maxinst=10000, warmupinst=1000;
 char str_temp[300];
 
@@ -53,7 +53,7 @@ __attribute((constructor)) void init_start()
     unsigned long long t2 = (unsigned long long)&necessaryRegs[0];
     unsigned long long t3 = 0;
     necessaryRegs[0]=(unsigned long long)&necessaryRegs[400];
-    SetTempReg(t1, t2, t3);
+    SetTempRegs(t1, t2, t3);
     Save_necessary();
     SetCounterLevel("0");
 

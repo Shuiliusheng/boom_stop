@@ -13,7 +13,7 @@ unsigned long long necessaryRegs[1000];
 
 unsigned long long npc=0, exittime=0;
 unsigned long long procTag=0x1234567;
-unsigned long long exitFucAddr=0x10f38;
+unsigned long long exitFucAddr=0x10ef8;
 unsigned long long maxinst=1000000, warmupinst=0;
 char str_temp[300];
 
@@ -26,9 +26,9 @@ void exit_fuc()
 {
     //exitFucAddr指向Save_int_regs的第一条指令
     //将当前进程的寄存器信息保存下来，类似于正常的异常处理程序的入口
-    Save_int_regs_exit();
+    Save_ALLIntRegs();
     //和Save_necessary对应，sp会被设置成新的值（necessRegs[400]）
-    Load_necessary_exit();
+    Load_Basic_Regs();
 
     //获取进程进入exit_fuc之前程序将要执行的下一条指令PC，同时将其设置在硬件临时寄存器中，用于之后跳转回去
     GetNPC(npc);
@@ -45,7 +45,7 @@ void exit_fuc()
     //重新设置下一次触发退出的条件
     SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst);
     //将Save_int_regs保存的内容恢复回去
-    Load_int_regs_exit();
+    Load_ALLIntRegs();
     //根据SetNPC的内容进行跳转
     URet();
 }
@@ -58,8 +58,8 @@ void init_start()
     unsigned long long t2 = (unsigned long long)&necessaryRegs[0];
     unsigned long long t3 = 0;
     necessaryRegs[0]=(unsigned long long)&necessaryRegs[400];
-    SetTempReg(t1, t2, t3);
-    Save_necessary_exit();
+    SetTempRegs(t1, t2, t3);
+    Save_Basic_Regs();
 
     //-------------------------------------------------------
     //用于设置计数器需要统计哪些级别的时间，0表示仅统计用户态，1表示统计user+super，3表示user+super+machine

@@ -99,11 +99,11 @@ void takeoverSyscall()
 
 
     uint64_t npc = infos->pc + 4;
-    WriteTemp("0", npc);
+    WriteTemp(0, npc);
 
     runinfo->lastcycles = __csrr_cycle();
     runinfo->lastinsts = __csrr_instret();
 
-    Load_regs(StoreIntRegAddr);
-    JmpTemp("0");
+    Load_int_regs(StoreIntRegAddr);
+    JmpTemp(0);
 }

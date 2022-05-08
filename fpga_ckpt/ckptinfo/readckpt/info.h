@@ -17,7 +17,7 @@
 
 #define RunningInfoAddr 0x150000
 #define StoreIntRegAddr "0x150028"
-#define StoreFpRegAddr "0x150128"
+#define StoreFpRegAddr  "0x150128"
 #define OldIntRegAddr   "0x150228"
 
 #define TakeOverAddr 0x1066a
@@ -59,9 +59,9 @@ void read_ckptsyscall(char filename[]);
 void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[]);
 
 //读写临时寄存器 + 跳转临时寄存器
-#define WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" rtempnum " \n\t"
-#define ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" rtempnum " \n\t"
-#define JmpRTemp(rtempnum) "ori x0, x0, 12+" rtempnum " \n\t"
+#define WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" #rtempnum " \n\t"
+#define ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" #rtempnum " \n\t"
+#define JmpRTemp(rtempnum) "ori x0, x0, 12+" #rtempnum " \n\t"
 
 
 #define Load_necessary(BaseAddr) asm volatile( \
@@ -85,7 +85,7 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[]);
 ); 
 
 #define Save_int_regs(BaseAddr) asm volatile( \
-    WriteRTemp("a0", "2") \
+    WriteRTemp("a0", 2) \
     "fence \n\t"   \
     "li a0, " BaseAddr " \n\t"   \
     "sd x1,8*1(a0)  \n\t"   \
@@ -119,12 +119,12 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[]);
     "sd x29,8*29(a0)  \n\t"   \
     "sd x30,8*30(a0)  \n\t"   \
     "sd x31,8*31(a0)  \n\t"   \
-    ReadRTemp("a1", "2") \
+    ReadRTemp("a1", 2) \
     "fence  \n\t"   \
     "sd a1,8*10(a0)  #store a0  \n\t"   \
 );  
 
-#define Load_regs(BaseAddr) asm volatile( \
+#define Load_int_regs(BaseAddr) asm volatile( \
     "li a0, " BaseAddr " \n\t"   \
     "ld x1,8*1(a0)  \n\t"   \
     "ld x2,8*2(a0)  \n\t"   \
@@ -161,7 +161,7 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[]);
 
 
 #define Save_fp_regs(BaseAddr) asm volatile( \
-    WriteRTemp("a0", "2") \
+    WriteRTemp("a0", 2) \
     "fence \n\t"   \
     "li a0, " BaseAddr " \n\t"   \
     "fsd f1,8*0(a0)  \n\t"   \
@@ -196,12 +196,12 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[]);
     "fsd f29,8*29(a0)  \n\t"   \
     "fsd f30,8*30(a0)  \n\t"   \
     "fsd f31,8*31(a0)  \n\t"   \
-    ReadRTemp("a0", "2") \
+    ReadRTemp("a0", 2) \
     "fence  \n\t"   \
 );  
 
 #define Load_fp_regs(BaseAddr) asm volatile( \
-    WriteRTemp("a0", "2") \
+    WriteRTemp("a0", 2) \
     "fence \n\t"   \
     "li a0, " BaseAddr " \n\t"   \
     "fld f0,8*0(a0)  \n\t"   \
@@ -236,7 +236,7 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[]);
     "fld f29,8*29(a0)  \n\t"   \
     "fld f30,8*30(a0)  \n\t"   \
     "fld f31,8*31(a0)  \n\t"   \
-    ReadRTemp("a0", "2") \
+    ReadRTemp("a0", 2) \
     "fence  \n\t"   \
 ); 
 

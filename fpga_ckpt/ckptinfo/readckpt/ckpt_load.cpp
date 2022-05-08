@@ -167,9 +167,9 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[])
 
     //step6: init npc and takeover_syscall addr to temp register
     printf("--- step 6, init npc to rtemp(5) and takeover_syscall addr to rtemp(6) ---\n");
-    WriteTemp("0", npc);
+    WriteTemp(0, npc);
     uint64_t takeover_addr = TakeOverAddr;
-    WriteTemp("1", takeover_addr);
+    WriteTemp(1, takeover_addr);
 
     //step7: save registers data of boot program 
     printf("--- step 789, save registers data of boot program, set testing program registers, start testing ---\n");
@@ -183,9 +183,9 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[])
     runinfo->startinsts = __csrr_instret();
     init_start();
     //step8: set the testing program's register information
-    Load_regs(StoreIntRegAddr);
+    Load_int_regs(StoreIntRegAddr);
 
     //step9: start the testing program
-    JmpTemp("0");
-    JmpTemp("1");
+    JmpTemp(0);
+    JmpTemp(1);
 }
