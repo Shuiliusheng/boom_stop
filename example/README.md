@@ -16,11 +16,11 @@
     - ctrl.h中的内容基本不需要改动，define.h中主要定义了一些汇编的宏定义
 
 2. ctrl.h中exit_fuc函数介绍：
-    - 需要注意：exitFucAddr并不是指向该函数的第一条指令，而是Save_int_regs的第一条指令
+    - 需要注意：exitFucAddr并不是指向该函数的第一条指令，而是Save_ALLIntRegs的第一条指令
     
     - 信息保存：如果不需要跳回到进程继续执行，可以不需要
-        - Save_int_regs：将当前进程的寄存器信息保存下来，类似于正常的异常处理程序的入口
-        - Load_necessary: 将一些必要的寄存器值恢复到最开始的内容，和Save_necessary对应。为了避免exit_fuc修改栈的内容，因此sp会被设置成新的值（necessRegs[400]）
+        - Save_ALLIntRegs：将当前进程的寄存器信息保存下来，类似于正常的异常处理程序的入口
+        - Load_Basic_Regs: 将一些必要的寄存器值恢复到最开始的内容，和Save_Basic_Regs对应。为了避免exit_fuc修改栈的内容，因此sp会被设置成新的值（necessRegs[400]）
         - GetNPC(npc) & SetNPC(npc)：获取进程进入exit_fuc之前程序将要执行的下一条指令PC，同时将其设置在硬件临时寄存器中，用于之后跳转回去；
     
     - 信息显示：
@@ -29,7 +29,7 @@
     
     - 恢复执行：如果不需要恢复，直接使用exit结束执行即可
         - SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst)：重新设置下一次触发退出的条件
-        - Load_int_regs：将Save_int_regs保存的内容恢复回去
+        - Load_ALLIntRegs：将Save_ALLIntRegs保存的内容恢复回去
         - URet：根据SetNPC的内容进行跳转
 
 
@@ -53,15 +53,15 @@
         - procMaxInsts：设置为maxinst，控制当进程的用户态指令数达到maxinsts时，发生退出情况
         - startInsts：设置为startinst，控制当进程的用户态指令数达到startinst时，重置计数器
 
-    - SetTempReg(t1, t2, t3) 
+    - SetTempRegs(t1, t2, t3) 
         - 设置硬件一些TempReg的值。共提供了三个临时寄存器，可以用于读写
         - 主要用于存储：intregs和necessaryRegs的起始地址，用于之后程序保存寄存器的值
     
-    - Load_necessary() & Save_necessary()
+    - Load_Basic_Regs() & Save_Basic_Regs()
         - 保存和恢复sp, gp, tp, fp ,ra
         - 基址由tempReg2寄存器决定
 
-    - Save_int_regs() & Load_int_regs()
+    - Save_ALLIntRegs() & Load_ALLIntRegs()
         - 保存和恢复32个定点寄存器
         - 由a0作为基址寄存器，其中a0的值首先保存到uscratch寄存器中（额外增加的）
         - 基址由tempReg1寄存器决定
@@ -70,5 +70,28 @@
         - 将所有计数器的值设置为0
     - unsigned long long read_counter(int n)
         - 读取第n个计数器的值
-    - DEFINE_CSRR(cycle) & DEFINE_CSRR(instret)
+    - DEF_CSRR(cycle) & DEF_CSRR(instret)
         - 原本riscv获取cycle和指令数的csr指令
+
+    - 一些基本的宏定义：
+    ```c
+        #define SetProcTag(srcreg)          "addi x0, " srcreg ", 1 \n\t"  
+        #define SetExitFuncAddr(srcreg)     "addi x0, " srcreg ", 2 \n\t"  
+        #define SetMaxInsts(srcreg)         "addi x0, " srcreg ", 3 \n\t"  
+        #define SetUScratch(srcreg)         "addi x0, " srcreg ", 4 \n\t" 
+        #define SetURetAddr(srcreg)         "addi x0, " srcreg ", 5 \n\t"  
+        #define SetMaxPriv(srcreg)          "addi x0, " srcreg ", 6 \n\t"  
+        #define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" #rtemp " \n\t"  
+        #define SetStartInsts(srcreg)       "addi x0, " srcreg ", 10 \n\t"   
+
+        #define GetProcTag(dstreg)          "addi x0, " dstreg ", 1025 \n\t"  
+        #define GetUScratch(dstreg)         "addi x0, " dstreg ", 1026 \n\t"  
+        #define GetExitNPC(dstreg)          "addi x0, " dstreg ", 1027 \n\t"  
+        #define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" #rtemp " \n\t"  
+
+        #define URet() asm volatile( "addi x0, x0, 128  # uret \n\t" ); 
+
+        #define GetPfcounter(dstreg, pfc)   "andi x0, " dstreg ", 32+" #pfc " \n\t"
+        #define RESET_COUNTER asm volatile(" andi x0, t0, 64 \n\t" );
+    ```
+    

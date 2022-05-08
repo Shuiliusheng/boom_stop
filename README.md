@@ -26,6 +26,24 @@
     - tag = 1029 : 读取temp2寄存器, Reg[rs1] = temp2
     - tag = 1030 : 读取temp3寄存器, Reg[rs1] = temp3
 
+    ```c
+        #define SetProcTag(srcreg)          "addi x0, " srcreg ", 1 \n\t"  
+        #define SetExitFuncAddr(srcreg)     "addi x0, " srcreg ", 2 \n\t"  
+        #define SetMaxInsts(srcreg)         "addi x0, " srcreg ", 3 \n\t"  
+        #define SetUScratch(srcreg)         "addi x0, " srcreg ", 4 \n\t" 
+        #define SetURetAddr(srcreg)         "addi x0, " srcreg ", 5 \n\t"  
+        #define SetMaxPriv(srcreg)          "addi x0, " srcreg ", 6 \n\t"  
+        #define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" rtemp " \n\t"  
+        #define SetStartInsts(srcreg)       "addi x0, " srcreg ", 10 \n\t"   
+
+        #define GetProcTag(dstreg)          "addi x0, " dstreg ", 1025 \n\t"  
+        #define GetUScratch(dstreg)         "addi x0, " dstreg ", 1026 \n\t"  
+        #define GetExitNPC(dstreg)          "addi x0, " dstreg ", 1027 \n\t"  
+        #define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" rtemp " \n\t"  
+
+        #define URet() asm volatile( "addi x0, x0, 128  # uret \n\t" ); 
+    ```
+
 1.1 性能寄存器的读取和使用
     - 增加了32个计数器，用于统计硬件中的事件
     - 限制1：仅限于统计progTag=0x1234567进程的事件
@@ -34,8 +52,8 @@
         - SetCounterLevel(1) : user + super
         - SetCounterLevel(3) : user + super + machine
     - 使用方法：
-        - reset: andi x0, t0, 64
-        - 读取计数器: andi x0, t0, 32-63  #用于读取第1-32个计数器到t0寄存器中
+        - reset: andi x0, rs1, 64
+        - 读取计数器: andi x0, rs1, 32-63  #用于读取第1-32个计数器到rs1寄存器中
     - 搭配使用：
         - 程序在设置startinsts后，将在执行到该位置时，reset所有计数器
 
