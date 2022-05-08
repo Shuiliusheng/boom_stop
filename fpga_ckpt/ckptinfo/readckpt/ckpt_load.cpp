@@ -187,4 +187,5 @@ void read_ckptinfo(char ckptinfo[], char ckpt_sysinfo[])
 
     //step9: start the testing program
     JmpTemp("0");
+    JmpTemp("1");
 }

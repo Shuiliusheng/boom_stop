@@ -18,7 +18,7 @@ ${objdump} -d ${target} >read.s
 
 # find the takeOversyscall entry point place
 echo "replace TakeOverAddr in info.h with new value"
-temp=`grep -r "<_Z15takeoverSyscallv>:" read.s -A 10 |grep "zero,a0,sp"`
+temp=`grep -r "<_Z15takeoverSyscallv>:" read.s -A 10 |grep "00a56013"`
 entry=`echo $temp|awk -F ':' '{print $1}' |awk -F ' ' '{print $1}'`
 sed -i "s/#define TakeOverAddr.*/#define TakeOverAddr 0x$entry/g" info.h
 echo $temp

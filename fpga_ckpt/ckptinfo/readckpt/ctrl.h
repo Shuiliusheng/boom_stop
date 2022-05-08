@@ -13,7 +13,7 @@ unsigned long long necessaryRegs[1000];
 
 unsigned long long npc=0, exittime=0;
 unsigned long long procTag=0x1234567;
-unsigned long long exitFucAddr=0x10f36;
+unsigned long long exitFucAddr=0x10f38;
 unsigned long long maxinst=1000000, warmupinst=0;
 char str_temp[300];
 

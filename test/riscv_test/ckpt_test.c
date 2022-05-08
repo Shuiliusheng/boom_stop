@@ -1,26 +1,30 @@
 #include<stdio.h>
 
+#define WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" rtempnum " \n\t"
+#define ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" rtempnum " \n\t"
+#define JmpRTemp(rtempnum) "ori x0, x0, 12+" rtempnum " \n\t"
+
 #define SetCkptTempReg(t0, t1, t2, t3) asm volatile( \
     "mv t0, %[rtemp0]  # t0 \n\t"  \
-    "ori x0, t0, 8 \n\t"  \
+    WriteRTemp("t0", "0")  \
     "mv t0, %[rtemp1]  # t1 \n\t"  \
-    "ori x0, t0, 9 \n\t"  \
+    WriteRTemp("t0", "1")    \
     "mv t0, %[rtemp2]  # t2 \n\t"  \
-    "ori x0, t0, 10 \n\t"  \
+    WriteRTemp("t0", "2")    \
     "mv t0, %[rtemp3]  # t3 \n\t"  \
-    "ori x0, t0, 11 \n\t"  \
+    WriteRTemp("t0", "3")    \
     : \
     :[rtemp0]"r"(t0), [rtemp1]"r"(t1), [rtemp2]"r"(t2), [rtemp3]"r"(t3)  \
 );
 
 #define GetCkptTempReg(t0, t1, t2, t3) asm volatile( \
-    "ori x0, t0, 4 \n\t"  \
+    ReadRTemp("t0", "0")  \
     "mv %[wt0], t0  # t0 \n\t"  \
-    "ori x0, t0, 5 \n\t"  \
+    ReadRTemp("t0", "1")  \
     "mv %[wt1], t0  # t0 \n\t"  \
-    "ori x0, t0, 6 \n\t"  \
+    ReadRTemp("t0", "2")  \
     "mv %[wt2], t0  # t0 \n\t"  \
-    "ori x0, t0, 7 \n\t"  \
+    ReadRTemp("t0", "3")  \
     "mv %[wt3], t0  # t0 \n\t"  \
     :[wt0]"=r"(t0), [wt1]"=r"(t1),[wt2]"=r"(t2),[wt3]"=r"(t3) \
     : \
@@ -28,8 +32,8 @@
 
 #define JmpTempToAddr(t2) asm volatile( \
     "mv t0, %[rtemp2]  # t2 \n\t"  \
-    "ori x0, t0, 10  # rtemp2 \n\t"  \
-    "ori x0, x0, 14 # jmp rtemp2 \n\t"  \
+    WriteRTemp("t0", "2")  \
+    JmpRTemp("2")  \
     : \
     :[rtemp2]"r"(t2) \
 );

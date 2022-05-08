@@ -88,27 +88,27 @@ Decoder::decode(ExtMachInst mach_inst, Addr addr)
     DPRINTF(Decode, "Decoding instruction 0x%08x at address %#x\n",
             mach_inst, addr);
 
-    //and x0, rd, rtemp: read temp,     op = 0x33, func7 = 0, func3 = 7
-    //sll x0, rs1, rtemp: write temp,   op = 0x33, func7 = 0, func3 = 1
-    //xor x0, x0, rtemp: jmp rtemp,      op = 0x33, func7 = 0, func3 = 4
+    //ori x0, rs1, #4-7: read temp,     op = 0x13, func3 = 6, inst(23, 22) === 1.U
+    //ori x0, rs1, #8-11: write temp,   op = 0x13, func3 = 6, inst(23, 22) === 2.U
+    //ori x0, x0, #12-15: jmp rtemp,    op = 0x13, func3 = 6, inst(23, 22) === 3.U
 
     unsigned int taddinst = 0x80b3; //add rd (1), rs1(1), rs2(0)
     unsigned int tjalrinst = 0x8067; //jalr rd(0), rs1(1), 0
     ExtMachInst old_mach_inst = mach_inst;
 
-    unsigned int opcode = 0, rs1 = 0, rs2 = 0, rd = 1, func7 = 0, func3 = 0;
+    unsigned int opcode = 0, rs1 = 0, rs2 = 0, rd = 1, imm23_22 = 0, func3 = 0;
     bool isRTemp = false, isWTemp = false, isJTemp = false;
     if (!compressed(emi)) {
         opcode = mach_inst % 128;
-        func7 = mach_inst >> 25;
+        imm23_22 = (mach_inst >> 22)%4;
         func3 = (mach_inst >> 12) % 8;
         rs1 = (mach_inst >> 15) % 32;
-        rs2 = (mach_inst >> 20) % 32;
+        rs2 = (mach_inst >> 20) % 4;
         rd = (mach_inst >> 7) % 32;
 
-        isRTemp = (opcode == 0x33) && (func7 == 0)  && (func3 == 7) && (rd == 0);
-        isWTemp = (opcode == 0x33) && (func7 == 0) && (func3 == 1) && (rd == 0);
-        isJTemp = (opcode == 0x33) && (func7 == 0)  && (func3 == 4) && (rd == 0);
+        isRTemp = (opcode == 0x13) && (func3 == 6) && (imm23_22 == 1) && (rd == 0);
+        isWTemp = (opcode == 0x13) && (func3 == 6) && (imm23_22 == 2) && (rd == 0);
+        isJTemp = (opcode == 0x13) && (func3 == 6) && (imm23_22 == 3) && (rd == 0);
     }
     
     if(isRTemp || isWTemp){

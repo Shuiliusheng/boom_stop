@@ -449,6 +449,14 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val fetch_pagefault = csr.io.exception && (csr.io.cause === Causes.fetch_page_fault.U)
   val mini_exception = RegNext(rob.io.flush.valid && !rob.io.com_xcpt.valid && rob.io.com_xcpt.bits.cause === MINI_EXCEPTION_MEM_ORDERING)
 
+  //commit inst type
+  val com_is_br   = Wire(Vec(coreWidth, Bool()))
+  val com_is_jalr = Wire(Vec(coreWidth, Bool()))
+  for(w <- 0 until coreWidth) {
+    com_is_br(w)    := rob.io.commit.arch_valids(w) && rob.io.commit.uops(w).is_br
+    com_is_jalr(w)  := rob.io.commit.arch_valids(w) && rob.io.commit.uops(w).is_jalr
+  }
+
   //connect signal to counters
   when (startCounter) {
     event_counters.io.event_signals_l(0) := 1.U  //cycles
@@ -482,13 +490,13 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     event_counters.io.event_signals_h(7) := Mux(io.lsu.perf.tlbMiss, 1.U, 0.U) //d-tlb miss
 
     event_counters.io.event_signals_h(8)  := Mux(io.ptw.perf.l2miss, 1.U, 0.U) //L2 TLB miss
-    event_counters.io.event_signals_h(9)  := Mux(misalign_excpt, 1.U, 0.U) // mis aligned load & store exception number
-    event_counters.io.event_signals_h(10) := Mux(lstd_pagefault, 1.U, 0.U) //load store caused page fault number
-    event_counters.io.event_signals_h(11) := Mux(fetch_pagefault, 1.U, 0.U) //fetch caused page fault number
-    event_counters.io.event_signals_h(12) := Mux(mini_exception, 1.U, 0.U) //load store wrong prediction cause mini exception
-    event_counters.io.event_signals_h(13) := Mux(b2.mispredict, 1.U, 0.U) //bp mis-prediction
-    event_counters.io.event_signals_h(14) := Mux(b2.mispredict && b2.cfi_type === CFI_JALR, 1.U, 0.U) //bp mis-prediction caused by jalr
-    event_counters.io.event_signals_h(15) := Mux(rob.io.commit.rollback, 1.U, 0.U) //rob rollback cycles
+    event_counters.io.event_signals_h(9)  := Mux(misalign_excpt || lstd_pagefault || fetch_pagefault, 1.U, 0.U) // misaligned & page fault
+    event_counters.io.event_signals_h(10) := Mux(mini_exception, 1.U, 0.U) //load store wrong prediction cause mini exception
+    event_counters.io.event_signals_h(11) := Mux(rob.io.commit.rollback, 1.U, 0.U) //rob rollback cycles
+    event_counters.io.event_signals_h(12) := RegNext(PopCount(com_is_br.asUInt)) //commit br number
+    event_counters.io.event_signals_h(13) := RegNext(PopCount(com_is_jalr.asUInt)) //commit jalr number
+    event_counters.io.event_signals_h(14) := Mux(b2.mispredict, 1.U, 0.U) //bp mis-prediction
+    event_counters.io.event_signals_h(15) := Mux(b2.mispredict && b2.cfi_type === CFI_JALR, 1.U, 0.U) //bp mis-prediction caused by jalr
   }
   .otherwise {
     for (w <- 0 until 16) {

@@ -98,3 +98,8 @@
         - step10: 将系统调用的返回地址写入rtemp0 (infos->pc + 4)
         - step11: 恢复测试程序的寄存器状态
         - step12: jmp rtemp0，跳回测试程序继续执行
+
+5. 使用的临时寄存器操作指令
+    - WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" rtempnum " \n\t"
+    - ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" rtempnum " \n\t"
+    - JmpRTemp(rtempnum) "ori x0, x0, 12+" rtempnum " \n\t"

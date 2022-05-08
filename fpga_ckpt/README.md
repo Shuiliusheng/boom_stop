@@ -67,10 +67,9 @@ Checkpoint Create and Restore (RISC-V)
 
      - 用于读取临时寄存器中的值到寄存器中，主要用于在保存完运行时状态的结尾恢复某个寄存器的值，搭配write rtemp使用
 
-     ```assembly
-     # and x0, rd, rtemp
-     # REG[rd] = REG[rtemp]
-     and x0, a1, x2  #read rtemp2 to reg a1
+     ```c
+     // ori x0, rs1, #4-7   # REG[rs1] = REG[0, 1, 2, 3]
+     #define ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" rtempnum " \n\t"
      ```
 
    - 写临时寄存器：
@@ -79,15 +78,8 @@ Checkpoint Create and Restore (RISC-V)
      - 用于设置某些固定的跳转地址，搭配jmp rtemp使用
 
      ```c
-     // sll x0, rs1, rtemp
-     // REG[rtemp] = REG[rs1]
-     #define WriteTemp(num, val) asm volatile( \
-         "mv t0, %[data] \n\t"   \
-         "sll x0, t0, x" num " \n\t"   \
-         "fence \n\t"   \
-         :  \
-         :[data]"r"(val)  \
-     );
+     // ori x0, rs1, #8-11  # REG[0, 1, 2, 3] = REG[rs1]
+     #define WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" rtempnum " \n\t"
      ```
 
    - 根据临时寄存器跳转
@@ -96,11 +88,8 @@ Checkpoint Create and Restore (RISC-V)
      - 用于接管系统调用时，跳转到固定的系统调用处理程序入口（提前将执行程序的ecall替换为jmptemp指令）
 
      ```c
-     // or x0, x0, rtemp
-     // jump to REG[rtemp]
-     #define JmpTemp(num) asm volatile( \
-         "xor x0, x0, x" num " \n\t"   \
-     );
+     // ori x0, x0, #12-15  # jump to REG[0, 1, 2, 3]
+     #define JmpRTemp(rtempnum) "ori x0, x0, 12+" rtempnum " \n\t"
      ```
 
 3. 软件实现
