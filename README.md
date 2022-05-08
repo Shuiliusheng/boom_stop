@@ -12,6 +12,7 @@
     - tag = 7 : 设置temp1寄存器, temp1 = Reg[rs1]
     - tag = 8 : 设置temp2寄存器, temp2 = Reg[rs1]
     - tag = 9 : 设置temp3寄存器, temp3 = Reg[rs1]
+    - tag = 10 : 设置startInsts，用于控制程序执行到该数量的指令时，reset所有计数器
 
 
     - tag = 128 : uret功能，根据uretaddr进行跳转
@@ -24,6 +25,23 @@
     - tag = 1028 : 读取temp1寄存器, Reg[rs1] = temp1
     - tag = 1029 : 读取temp2寄存器, Reg[rs1] = temp2
     - tag = 1030 : 读取temp3寄存器, Reg[rs1] = temp3
+
+    ```c
+        #define SetProcTag(srcreg)          "addi x0, " srcreg ", 1 \n\t"  
+        #define SetExitFuncAddr(srcreg)     "addi x0, " srcreg ", 2 \n\t"  
+        #define SetMaxInsts(srcreg)         "addi x0, " srcreg ", 3 \n\t"  
+        #define SetUScratch(srcreg)         "addi x0, " srcreg ", 4 \n\t" 
+        #define SetURetAddr(srcreg)         "addi x0, " srcreg ", 5 \n\t"  
+        #define SetMaxPriv(srcreg)          "addi x0, " srcreg ", 6 \n\t"  
+        #define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" rtemp " \n\t"  
+        #define SetStartInsts(srcreg)       "addi x0, " srcreg ", 10 \n\t"   
+
+        #define GetProcTag(dstreg)          "addi x0, " dstreg ", 1025 \n\t"  
+        #define GetUScratch(dstreg)         "addi x0, " dstreg ", 1026 \n\t"  
+        #define GetExitNPC(dstreg)          "addi x0, " dstreg ", 1027 \n\t"  
+        #define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" rtemp " \n\t"  
+
+        #define URet() asm volatile( "addi x0, x0, 128  # uret \n\t" ); 
 
 
 2. 主要思路
@@ -44,7 +62,3 @@
     - start_record函数会自动在main函数之前被调用执行，因此可以在该函数对一些特殊寄存器进行设置
     - exit_fuc函数是给出的一个示例函数，用于处理达到最大指令数的信息收集和输出
 
-
-##  note
-- 如果想测试riscv-test，就需要将core.scala的csr.io.status.prv === 0.U 改为 3.U
-    - 0.U: user, 3.U: machine

@@ -55,6 +55,7 @@ trait ScalarOpConstants
   val SetEvent_Temp1      = 7.U(12.W)
   val SetEvent_Temp2      = 8.U(12.W)
   val SetEvent_Temp3      = 9.U(12.W)
+  val SetEvent_StartInsts = 10.U(12.W)
 
 
   val ReadEvent_ProcTag       = 1025.U(12.W)

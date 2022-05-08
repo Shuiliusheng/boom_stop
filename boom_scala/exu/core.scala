@@ -370,6 +370,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val exitFuncAddr = RegInit(0.U(vaddrBitsExtended.W))
   val procMaxInsts = RegInit(0.U(64.W))
   val procRunningInsts = RegInit(0.U(64.W))
+  val startInsts = RegInit(0.U(64.W))
 
   val uscratch = RegInit(0.U(64.W))
   val uretaddr = RegInit(0.U(64.W))
@@ -383,8 +384,18 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
 
   val isUserMode = csr.io.status.prv === 0.U && RegNext(csr.io.status.prv === 0.U) && RegNext(RegNext(csr.io.status.prv === 0.U))
   val workValid = isUserMode && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
-  val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U
+  val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U && startInsts === 0.U
 
+  //chw: update execution insts
+  when (workValid) { //usemode
+    procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
+  }
+
+  //reset counter when running > start
+  when (workValid && startInsts =/= 0.U && procRunningInsts > startInsts) {
+     startInsts := 0.U
+     procRunningInsts := 0.U
+  }
 
   //-------------------------------------------------------------
   //-------------------------------------------------------------
@@ -1052,14 +1063,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   csr.io.cause     := RegNext(rob.io.com_xcpt.bits.cause)
   csr.io.ungated_clock := clock
 
-  //chw: update execution insts
-  when (workValid) { //usemode
-    procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
-    when (procRunningInsts(9, 0) === 0.U){
-      printf("procRunningInsts: %d\n", procRunningInsts)
-    }
-  }
-
+  //set exitNPC
   when (overflow_insts && RegNext(rob.io.com_xcpt.valid) && csr.io.cause === (Causes.illegal_instruction).U) {
     exitNPC := csr.io.pc
     printf("overflow happen, npc: 0x%x\n", csr.io.pc)
@@ -1151,6 +1155,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
           is (SetEvent_Temp1)       { tempReg1 := rs1_data }
           is (SetEvent_Temp2)       { tempReg2 := rs1_data }
           is (SetEvent_Temp3)       { tempReg3 := rs1_data }
+          is (SetEvent_StartInsts)  { startInsts := rs1_data }
 
         }
         printf("csr.io.status.prv: %d\n", csr.io.status.prv)
