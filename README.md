@@ -117,10 +117,10 @@
     - event 22, dtlb_miss_num
     - event 23, dtlb_ptw_num
     - event 24, l2tlb_miss_num
-    - event 25, misalign_excpt
-    - event 26, lstd_pagefault
-    - event 27, fetch_pagefault
-    - event 28, mini_exception
-    - event 29, branch_mis_num
-    - event 30, jalr_mis_num
-    - event 31, rollback_cycles
+    - event 25, misaligned & pagefault
+    - event 26, mini_exception
+    - event 27, rollback_cycles
+    - event 28, commit_br_num
+    - event 29, commit_jalr_num
+    - event 30, branch_mis_num
+    - event 31, jalr_mis_num
