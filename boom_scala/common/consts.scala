@@ -41,9 +41,9 @@ trait ScalarOpConstants
   val Y = BitPat("b1")
   val N = BitPat("b0")
 
-  //************************************
+  //-------------------------------------------------------
   // Extra Constants
-  //chw
+  // Enable_MaxInsts_Support
   val SetEvent_ProcTag        = 1.U(12.W)
   val SetEvent_ExitFuncAddr   = 2.U(12.W)
   val SetEvent_ProcMaxInsts   = 3.U(12.W)
@@ -66,9 +66,9 @@ trait ScalarOpConstants
   val ReadEvent_Temp2         = 1029.U(12.W)
   val ReadEvent_Temp3         = 1030.U(12.W)
 
-
   //special inst fuc
   val SetEvent_URet       = 128.U(12.W)
+  //----------------------------------------------------
 
 
   // Which branch predictor predicted us

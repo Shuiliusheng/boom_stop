@@ -365,6 +365,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
         "Using VM?             : " + usingVM.toString) + "\n")
 
   //-------------------------------------------------------------
+  //Enable_MaxInsts_Support: added some special registers
   // process event register
   val procTag = RegInit(0.U(32.W))
   val exitFuncAddr = RegInit(0.U(vaddrBitsExtended.W))
@@ -381,20 +382,26 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   val tempReg2  = RegInit(0.U(64.W))
   val tempReg3  = RegInit(0.U(64.W))
 
-
+  // whether is in user mode in now
   val isUserMode = csr.io.status.prv === 0.U && RegNext(csr.io.status.prv === 0.U) && RegNext(RegNext(csr.io.status.prv === 0.U))
   val workValid = isUserMode && procTag === 0x1234567.U && (procMaxInsts =/= 0.U)
   val overflow_insts = workValid && (procRunningInsts > procMaxInsts) && exitFuncAddr =/= 0.U && startInsts === 0.U
 
-  //chw: update execution insts
-  when (workValid) { //usemode
+  //update procRunningInsts
+  when (workValid) { 
     procRunningInsts := procRunningInsts + RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
   }
 
-  //reset counter when running > start
+  //reset counter when procRunningInsts > startInsts
   when (workValid && startInsts =/= 0.U && procRunningInsts > startInsts) {
-     startInsts := 0.U
-     procRunningInsts := 0.U
+    startInsts := 0.U
+    procRunningInsts := 0.U
+  }
+
+  //update exitNPC, when overflow is happend and cause a exception processing
+  when (overflow_insts && RegNext(rob.io.com_xcpt.valid) && csr.io.cause === (Causes.illegal_instruction).U) {
+    exitNPC := csr.io.pc
+    printf("overflow happen, npc: 0x%x\n", csr.io.pc)
   }
 
   //-------------------------------------------------------------
@@ -435,11 +442,11 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
     new_ghist.ras_idx := io.ifu.get_pc(0).entry.ras_idx
     io.ifu.redirect_ghist := new_ghist
     when (FlushTypes.useCsrEvec(flush_typ)) {
+      //Enable_MaxInsts_Support: when overflow maxinst && exception cause is illegal inst, then redirect to exitFuncAddr
       when (isUserMode && overflow_insts && RegNext(rob.io.com_xcpt.bits.cause === (Causes.illegal_instruction).U)) {
         io.ifu.redirect_pc  := exitFuncAddr
         procTag := 0.U
         procMaxInsts := 0.U
-
         printf("overflow redirect, target pc: 0x%x\n", exitFuncAddr)  //testing
       }
       .otherwise {
@@ -555,6 +562,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
 
     dec_uops(w) := decode_units(w).io.deq.uop
 
+    //Enable_MaxInsts_Support: when overflow maxinsts will make all decoded uop become illegal inst
     when (overflow_insts) {
       dec_uops(w).exception := true.B
       dec_uops(w).exc_cause := (Causes.illegal_instruction).U
@@ -1053,6 +1061,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   // Extra I/O
   // Delay retire/exception 1 cycle
   csr.io.retire    := RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
+  //Enable_MaxInsts_Support: overflow maxinst will not cause exception to kernel
   csr.io.exception := RegNext(rob.io.com_xcpt.valid && !(overflow_insts))
   // csr.io.pc used for setting EPC during exception or CSR.io.trace.
 
@@ -1062,12 +1071,6 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   // Cause not valid for for CALL or BREAKPOINTs (CSRFile will override it).
   csr.io.cause     := RegNext(rob.io.com_xcpt.bits.cause)
   csr.io.ungated_clock := clock
-
-  //set exitNPC
-  when (overflow_insts && RegNext(rob.io.com_xcpt.valid) && csr.io.cause === (Causes.illegal_instruction).U) {
-    exitNPC := csr.io.pc
-    printf("overflow happen, npc: 0x%x\n", csr.io.pc)
-  }
 
   val tval_valid = csr.io.exception &&
     csr.io.cause.isOneOf(
@@ -1137,29 +1140,26 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
         }
       }
 
+      //Enable_MaxInsts_Support: read special registers data from regfile
       val rrd_uop = iregister_read.io.exe_reqs(iss_idx).bits.uop
-
       when (rrd_uop.setEvent && rrd_uop.ldst === 0.U ) {
         val tag = rrd_uop.inst(31, 20)
         val rs1_data = iregister_read.io.exe_reqs(iss_idx).bits.rs1_data
         switch (tag){
-          is (SetEvent_ProcTag)      { procTag := rs1_data(31, 0) }
-          is (SetEvent_ExitFuncAddr) { exitFuncAddr := rs1_data }
-          is (SetEvent_ProcMaxInsts) { 
+          is (SetEvent_ProcTag)       { procTag := rs1_data(31, 0) }
+          is (SetEvent_ExitFuncAddr)  { exitFuncAddr := rs1_data }
+          is (SetEvent_UScratch)      { uscratch := rs1_data }
+          is (SetEvent_URetAddr)      { uretaddr := rs1_data }
+          is (SetEvent_MaxPriv)       { maxPriv  := rs1_data(1,0) }
+          is (SetEvent_Temp1)         { tempReg1 := rs1_data }
+          is (SetEvent_Temp2)         { tempReg2 := rs1_data }
+          is (SetEvent_Temp3)         { tempReg3 := rs1_data }
+          is (SetEvent_StartInsts)    { startInsts := rs1_data }
+          is (SetEvent_ProcMaxInsts)  { 
             procMaxInsts := rs1_data 
             procRunningInsts := 0.U 
           }
-          is (SetEvent_UScratch)    { uscratch := rs1_data }
-          is (SetEvent_URetAddr)    { uretaddr := rs1_data }
-          is (SetEvent_MaxPriv)     { maxPriv  := rs1_data(1,0) }
-          is (SetEvent_Temp1)       { tempReg1 := rs1_data }
-          is (SetEvent_Temp2)       { tempReg2 := rs1_data }
-          is (SetEvent_Temp3)       { tempReg3 := rs1_data }
-          is (SetEvent_StartInsts)  { startInsts := rs1_data }
-
         }
-        printf("csr.io.status.prv: %d\n", csr.io.status.prv)
-        printf("setEvent, pc: 0x%x, inst: 0x%x, tag: %d, data: 0x%x\n", rrd_uop.debug_pc, rrd_uop.inst, tag, rs1_data)
       }
 
       iss_idx += 1
@@ -1237,6 +1237,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
         iregfile.io.write_ports(w_cnt).bits.data := wbdata
       }
 
+      //Enable_MaxInsts_Support: write special registers data to regfile
       when (wbresp.bits.uop.setEvent && wbresp.bits.uop.ldst =/= 0.U ) {
         val tag = wbresp.bits.uop.inst(31, 20)
         switch (tag) {
@@ -1247,7 +1248,7 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
           is (ReadEvent_Temp2)     { iregfile.io.write_ports(w_cnt).bits.data := tempReg2 }
           is (ReadEvent_Temp3)     { iregfile.io.write_ports(w_cnt).bits.data := tempReg3 }
         }
-         printf("getEvent, pc: 0x%x, inst: 0x%x, tag: %d, ldst: %d, data: 0x%x\n", wbresp.bits.uop.debug_pc, wbresp.bits.uop.inst, tag, wbresp.bits.uop.ldst, procTag)
+        printf("getEvent, pc: 0x%x, inst: 0x%x, tag: %d, ldst: %d, data: 0x%x\n", wbresp.bits.uop.debug_pc, wbresp.bits.uop.inst, tag, wbresp.bits.uop.ldst, procTag)
       }
 
       assert (!wbIsValid(RT_FLT), "[fppipeline] An FP writeback is being attempted to the Int Regfile.")

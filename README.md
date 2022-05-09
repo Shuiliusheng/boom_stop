@@ -62,3 +62,4 @@
     - start_record函数会自动在main函数之前被调用执行，因此可以在该函数对一些特殊寄存器进行设置
     - exit_fuc函数是给出的一个示例函数，用于处理达到最大指令数的信息收集和输出
 
+4. boom_scala中修改的地方：Enable_MaxInsts_Support标记

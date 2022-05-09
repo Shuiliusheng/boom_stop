@@ -5,7 +5,6 @@
     - init_start函数具体完成的任务：
         - SetTempReg(t1, t2, t3) & Save_necessary(): 用于保存一些必要的寄存器值， 同时将necessRegs[400]作为新的sp，用于临时使用
         - SetCounterLevel(0): 用于设置计数器需要统计哪些级别的时间，0表示仅统计用户态，1表示统计user+super，3表示user+super+machine
-        - RESET_COUNTER：用于将所有计数器重设为0
         - SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst)：用于控制程序执行
             - procTag: 设置当前进程的TAG，只有当该TAG为0x1234567时，才能够统计事件，自动退出等
             - exitFucAddr: 当进程达到最大执行执行数时，跳转的入口地址，通常指向exit_fuc的入口。当为0时。不发生任何跳转；
@@ -25,7 +24,6 @@
     
     - 信息显示：
         - write函数：使用printf函数可能会导致和源程序的printf函数冲突，可能引发临界区资源的冲突而卡死
-        - exit_record：用于获取当前计数器的值，并进行输出（以json的格式输出，便于之后处理）
     
     - 恢复执行：如果不需要恢复，直接使用exit结束执行即可
         - SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst)：重新设置下一次触发退出的条件
