@@ -443,7 +443,7 @@ class ALUUnit(isJmpUnit: Boolean = false, numStages: Int = 1, dataWidth: Int)(im
     Mux(io.req.bits.uop.ldst_is_rs1, io.req.bits.rs1_data, io.req.bits.rs2_data),
     Mux(io.req.bits.uop.uopc === uopMOV, io.req.bits.rs2_data, alu.io.out))
   r_val (0) := io.req.valid
-  r_data(0) := Mux(io.req.bits.uop.is_sfb_br, pc_sel === PC_BRJMP, Mux(io.req.bits.uop.opCounter, io.req.bits.rs1_data, alu_out))
+  r_data(0) := Mux(io.req.bits.uop.is_sfb_br, pc_sel === PC_BRJMP, alu_out)
   r_pred(0) := io.req.bits.uop.is_sfb_shadow && io.req.bits.pred_data
   for (i <- 1 until numStages) {
     r_val(i)  := r_val(i-1)

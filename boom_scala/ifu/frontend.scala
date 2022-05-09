@@ -287,7 +287,7 @@ class BoomFrontendIO(implicit p: Parameters) extends BoomBundle
 
   val perf = Input(new FrontendPerfEvents)
 
-  //chw: for icache information
+  ////Enable_PerfCounter_Support: for icache information
   val icache_valid_access = Input(Bool())
   val bpsrc_f1 = Input(Bool())
   val bpsrc_f2 = Input(Bool())
@@ -365,7 +365,7 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
   val s0_replay_ppc  = Wire(UInt())
   val s0_s1_use_f3_bpd_resp = WireInit(false.B)
 
-
+  //Enable_PerfCounter_Support
   io.cpu.icache_valid_access := icache.io.req.valid
   io.cpu.bpsrc_f1 := s0_valid && (s0_tsrc === BSRC_1)
   io.cpu.bpsrc_f2 := s0_valid && (s0_tsrc === BSRC_2)
