@@ -254,7 +254,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val robAddrSz       = log2Ceil(numRobRows) + log2Ceil(coreWidth)
   // the f-registers are mapped into the space above the x-registers
   // val logicalRegCount = if (usingFPU) 64 else 32
-  val logicalRegCount = 64
+  val logicalRegCount = 64    //Enable_Ckpt_Support: add 4 temp registers
   val lregSz          = log2Ceil(logicalRegCount)
   val ipregSz         = log2Ceil(numIntPhysRegs)
   val fpregSz         = log2Ceil(numFpPhysRegs)

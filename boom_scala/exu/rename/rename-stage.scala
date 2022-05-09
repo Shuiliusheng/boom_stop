@@ -207,7 +207,7 @@ class RenameStage(
 
   //-------------------------------------------------------------
   // Rename Structures
-
+  //Enable_Ckpt_Support
   val maptable = Module(new RenameMapTable(plWidth, if (float) 32 else 36, numPhysRegs, false, float))
   val freelist = Module(new RenameFreeList(plWidth, numPhysRegs, if (float) 32 else 36))
   val busytable = Module(new RenameBusyTable(plWidth, numPhysRegs, numWbPorts, false, float))

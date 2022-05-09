@@ -517,51 +517,25 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
 
   uop.exception := xcpt_valid
   uop.exc_cause := xcpt_cause
-  
-  //-------------------------------------------------------------
-  val setEvent = (cs.uopc === uopADDI) && (inst(RD_MSB,RD_LSB) === 0.U)
-  val getEvent = setEvent && (inst(31, 29) =/= 0.U)
-  uop.setEvent := setEvent
-
-  when (setEvent) {
-    printf("decode setEvent, pc: 0x%x, inst: 0x%x, tag: %d\n", uop.debug_pc, uop.inst, inst(31, 20))
-  }
-
-  val opCounter = (cs.uopc === uopANDI) && (inst(RD_MSB,RD_LSB) === 0.U)
-  val readCounter = opCounter && (inst(25, 25) === 1.U)
-  uop.opCounter := opCounter
-
-  when (opCounter) {
-    printf("decode opCounter, pc: 0x%x, inst: 0x%x, tag: %d\n", uop.debug_pc, uop.inst, inst(31, 20))
-  }
-
-  //-------------------------------------------------------------
-  val opTempReg  = (cs.uopc === uopORI) && (inst(RD_MSB,RD_LSB) === 0.U)
-  val getTempReg = opTempReg && (inst(23, 22) === 1.U)
-  val setTempReg = opTempReg && (inst(23, 22) === 2.U)
-  val jmpTempReg = opTempReg && (inst(23, 22) === 3.U)
-  val rtemp = WireInit(0.U(6.W))
-  rtemp := Cat(1.U(1.W), Cat(0.U(3.W), inst(21, 20)))
 
   //-------------------------------------------------------------
 
-  uop.uopc       := Mux(jmpTempReg, uopJALR, Mux(getTempReg || setTempReg, uopADD, cs.uopc))
+  uop.uopc       := cs.uopc
   uop.iq_type    := cs.iq_type
-  uop.fu_code    := Mux(jmpTempReg, FU_JMP, cs.fu_code)
-
+  uop.fu_code    := cs.fu_code
 
   // x-registers placed in 0-31, f-registers placed in 32-63.
   // This allows us to straight-up compare register specifiers and not need to
   // verify the rtypes (e.g., bypassing in rename).
-  uop.ldst       := Mux(jmpTempReg, 0.U, Mux(getEvent || readCounter || getTempReg, inst(RS1_MSB,RS1_LSB), Mux(setTempReg, rtemp, inst(RD_MSB,RD_LSB))))
-  uop.lrs1       := Mux(jmpTempReg, rtemp, Mux(getTempReg, 0.U, inst(RS1_MSB,RS1_LSB)))
-  uop.lrs2       := Mux(getTempReg, rtemp, Mux(setTempReg, 0.U, inst(RS2_MSB,RS2_LSB)))
+  uop.ldst       := inst(RD_MSB,RD_LSB)
+  uop.lrs1       := inst(RS1_MSB,RS1_LSB)
+  uop.lrs2       := inst(RS2_MSB,RS2_LSB)
   uop.lrs3       := inst(RS3_MSB,RS3_LSB)
 
   uop.ldst_val   := cs.dst_type =/= RT_X && !(uop.ldst === 0.U && uop.dst_rtype === RT_FIX)
   uop.dst_rtype  := cs.dst_type
   uop.lrs1_rtype := cs.rs1_type
-  uop.lrs2_rtype := Mux(jmpTempReg, RT_X, Mux(setTempReg || getTempReg, RT_FIX, cs.rs2_type))
+  uop.lrs2_rtype := cs.rs2_type
   uop.frs3_en    := cs.frs3_en
 
   uop.ldst_is_rs1 := uop.is_sfb_shadow
@@ -592,7 +566,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   uop.is_fence   := cs.is_fence
   uop.is_fencei  := cs.is_fencei
   uop.is_sys_pc2epc   := cs.is_sys_pc2epc
-  uop.is_unique  := cs.inst_unique || setEvent || opCounter
+  uop.is_unique  := cs.inst_unique
   uop.flush_on_commit := cs.flush_on_commit || (csr_en && !csr_ren && io.csr_decode.write_flush)
 
   uop.bypassable   := cs.bypassable
@@ -602,13 +576,13 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
 
   // repackage the immediate, and then pass the fewest number of bits around
   val di24_20 = Mux(cs.imm_sel === IS_B || cs.imm_sel === IS_S, inst(11,7), inst(24,20))
-  uop.imm_packed := Mux(jmpTempReg || setTempReg || getTempReg, 0.U, Cat(inst(31,25), di24_20, inst(19,12)))
+  uop.imm_packed := Cat(inst(31,25), di24_20, inst(19,12))
 
   //-------------------------------------------------------------
 
   uop.is_br          := cs.is_br
   uop.is_jal         := (uop.uopc === uopJAL)
-  uop.is_jalr        := (uop.uopc === uopJALR) || jmpTempReg
+  uop.is_jalr        := (uop.uopc === uopJALR)
   // uop.is_jump        := cs.is_jal || (uop.uopc === uopJALR)
   // uop.is_ret         := (uop.uopc === uopJALR) &&
   //                       (uop.ldst === X0) &&
@@ -617,12 +591,64 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   //                       (uop.ldst === RA)
 
   //-------------------------------------------------------------
+  //Enable_MaxInsts_Support:
+  val setEvent = (cs.uopc === uopADDI) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val getEvent = setEvent && (inst(31, 29) =/= 0.U)
+  uop.setEvent := setEvent
 
-  io.deq.uop := uop
+  //Enable_PerfCounter_Support:
+  val opCounter = (cs.uopc === uopANDI) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val readCounter = opCounter && (inst(25, 25) === 1.U)
+  uop.opCounter := opCounter
 
-  when(setTempReg || getTempReg || jmpTempReg){
-    printf("pc: 0x%x, inst: 0x%x, isSet: %d, isGet: %d, isJmp: %d, uopc: %d, futype: %d, lrs1: %d, lrs2: %d, ldst: %d, ldst_val: %d\n", uop.debug_pc, uop.inst, setTempReg, getTempReg, jmpTempReg, uop.uopc, uop.fu_code, uop.lrs1, uop.lrs2, uop.ldst, uop.ldst_val)
+  when (readCounter || getEvent) {
+    uop.ldst := inst(RS1_MSB,RS1_LSB)
   }
+
+  when (opCounter || setEvent) {
+    uop.is_unique := true.B
+  }
+
+  when (readCounter) {
+    uop.uopc := uopADDI
+    uop.imm_packed := 0.U
+  }
+
+  //Enable_Ckpt_Support
+  val opTempReg  = (cs.uopc === uopORI) && (inst(RD_MSB,RD_LSB) === 0.U)
+  val getTempReg = opTempReg && (inst(23, 22) === 1.U)
+  val setTempReg = opTempReg && (inst(23, 22) === 2.U)
+  val jmpTempReg = opTempReg && (inst(23, 22) === 3.U)
+  val rtemp = WireInit(0.U(6.W))
+  rtemp := Cat(1.U(1.W), Cat(0.U(3.W), inst(21, 20)))
+
+  when (jmpTempReg) {
+    uop.uopc := uopJALR
+    uop.is_jalr := true.B
+    uop.fu_code := FU_JMP
+    uop.ldst := 0.U
+    uop.lrs1 := rtemp
+    uop.ldst_val := false.B
+  }
+
+  when (getTempReg) {
+    uop.uopc := uopADDI
+    uop.ldst := inst(RS1_MSB, RS1_LSB)
+    uop.lrs1 := rtemp
+  }
+
+  when (setTempReg) {
+    uop.uopc := uopADDI
+    uop.ldst := rtemp
+  }
+
+  when (jmpTempReg || getTempReg || setTempReg) {
+    uop.lrs2_rtype := RT_X
+    uop.imm_packed := 0.U
+  }
+
+  //-------------------------------------------------------------
+  io.deq.uop := uop
 }
 
 /**
