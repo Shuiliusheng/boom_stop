@@ -3,60 +3,72 @@
 
 
 //-------------------------------------------------------------------
+#define SetProcTag(srcreg)          "addi x0, " srcreg ", 1 \n\t"  
+#define SetExitFuncAddr(srcreg)     "addi x0, " srcreg ", 2 \n\t"  
+#define SetMaxInsts(srcreg)         "addi x0, " srcreg ", 3 \n\t"  
+#define SetUScratch(srcreg)         "addi x0, " srcreg ", 4 \n\t" 
+#define SetURetAddr(srcreg)         "addi x0, " srcreg ", 5 \n\t"  
+#define SetMaxPriv(srcreg)          "addi x0, " srcreg ", 6 \n\t"  
+#define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" #rtemp " \n\t"  
+#define SetStartInsts(srcreg)       "addi x0, " srcreg ", 10 \n\t"   
+
+#define GetProcTag(dstreg)          "addi x0, " dstreg ", 1025 \n\t"  
+#define GetUScratch(dstreg)         "addi x0, " dstreg ", 1026 \n\t"  
+#define GetExitNPC(dstreg)          "addi x0, " dstreg ", 1027 \n\t"  
+#define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" #rtemp " \n\t"  
+
+#define URet() asm volatile( "addi x0, x0, 128  # uret \n\t" ); 
+
+//---------------------------------------------------------------------
 
 #define GetNPC(npc) asm volatile( \
-    "addi x0, t0, 1027 \n\t"  \
+    GetExitNPC("t0")    \
     "mv %[npc], t0  # uretaddr \n\t"  \
     : [npc]"=r"(npc)\
     :  \
 ); 
 
 #define SetNPC(npc) asm volatile( \
-    "mv t0, %[npc]  # uretaddr \n\t"  \
-    "addi x0, t0, 5 \n\t"  \
+    "mv t0, %[npc]    \n\t"  \
+    SetURetAddr("t0")  \
     : \
     :[npc]"r"(npc)  \
 ); 
 
-
-#define URet() asm volatile( \
-    "addi x0, x0, 128  # uret \n\t"  \
-); 
-
 #define SetCounterLevel(priv) asm volatile( \
     "li t0, " priv "  # priv: user/super/machine \n\t"  \
-    "addi x0, t0, 6 \n\t"  \
+    SetMaxPriv("t0")  \
 ); 
 
 
 #define SetCtrlReg(tag, exitFucAddr, maxinst, startinst) asm volatile( \
     "mv t0, %[rtemp1]  # tag \n\t"  \
-    "addi x0, t0, 1 \n\t"  \
+    SetProcTag("t0")        \
     "mv t0, %[rtemp2]  # exit \n\t"  \
-    "addi x0, t0, 2 \n\t"  \
+    SetExitFuncAddr("t0")   \
     "mv t0, %[rtemp3]  # maxinst \n\t"  \
-    "addi x0, t0, 3 \n\t"  \
+    SetMaxInsts("t0")       \
     "mv t0, %[rtemp4]  # startinst \n\t"  \
-    "addi x0, t0, 10 \n\t"  \
+    SetStartInsts("t0")     \
     : \
     :[rtemp1]"r"(tag), [rtemp2]"r"(exitFucAddr), [rtemp3]"r"(maxinst), [rtemp4]"r"(startinst)\
 ); 
 
 
-#define SetTempReg(t1, t2, t3) asm volatile( \
-    "mv t0, %[rtemp1]  # tag \n\t"  \
-    "addi x0, t0, 7 \n\t"  \
-    "mv t0, %[rtemp2]  # exit \n\t"  \
-    "addi x0, t0, 8 \n\t"  \
-    "mv t0, %[rtemp3]  # maxinst \n\t"  \
-    "addi x0, t0, 9 \n\t"  \
+#define SetTempRegs(t1, t2, t3) asm volatile( \
+    "mv t0, %[rtemp1]  \n\t"    \
+    SetTempReg("t0", 0)       \
+    "mv t0, %[rtemp2]  \n\t"    \
+    SetTempReg("t0", 1)       \
+    "mv t0, %[rtemp3]  \n\t"    \
+    SetTempReg("t0", 2)       \
     : \
     :[rtemp1]"r"(t1), [rtemp2]"r"(t2), [rtemp3]"r"(t3)  \
 );
 
 
-#define Load_necessary() asm volatile( \
-    "addi x0, t0, 1029 \n\t"   \
+#define Load_Basic_Regs() asm volatile( \
+    GetTempReg("t0", 1)   \
     "ld sp,8*0(t0)  \n\t"   \
     "ld gp,8*1(t0)  \n\t"   \
     "ld tp,8*2(t0)  \n\t"   \
@@ -64,17 +76,17 @@
     "ld ra,8*4(t0)  \n\t"   \
 ); 
 
-#define Save_necessary() asm volatile( \
-    "addi x0, t0, 1029 \n\t"   \
+#define Save_Basic_Regs() asm volatile( \
+    GetTempReg("t0", 1)   \
     "sd gp,8*1(t0)  \n\t"   \
     "sd tp,8*2(t0)  \n\t"   \
     "sd fp,8*3(t0)  \n\t"   \
     "sd ra,8*4(t0)  \n\t"   \
 ); 
 
-#define Save_int_regs() asm volatile( \
-    "addi x0, a0, 4  # write a0 to uscratch \n\t"   \
-    "addi x0, a0, 1028 # read temp1 to a0 \n\t"   \
+#define Save_ALLIntRegs() asm volatile( \
+    SetUScratch("a0")       \
+    GetTempReg("a0", 0)   \
     "sd x1,8*1(a0)  \n\t"   \
     "sd x2,8*2(a0)  \n\t"   \
     "sd x3,8*3(a0)  \n\t"   \
@@ -108,8 +120,8 @@
     "sd x31,8*31(a0)  \n\t"   \
 );  
 
-#define Load_int_regs() asm volatile( \
-    "addi x0, a0, 1028 # read temp1 to a0 \n\t"   \
+#define Load_ALLIntRegs() asm volatile( \
+    GetTempReg("a0", 0)   \
     "ld x1,8*1(a0)  \n\t"   \
     "ld x2,8*2(a0)  \n\t"   \
     "ld x3,8*3(a0)  \n\t"   \
@@ -140,61 +152,41 @@
     "ld x29,8*29(a0)  \n\t"   \
     "ld x30,8*30(a0)  \n\t"   \
     "ld x31,8*31(a0)  \n\t"   \
-    "addi x0, a0, 1026  \n\t"   \
+    GetUScratch("a0")         \
 ); 
 
 
 //-------------------------------------------------------------------
-//performance counter read event
-#define RESET_COUNTER asm volatile( \
-	" andi x0, t0, 64      \n\t" \
-);
+#define RESET_COUNTER asm volatile(" andi x0, t0, 1024 \n\t" );
 
-unsigned long long read_counter(int n){
-	unsigned long long temp=0;
-	switch(n){
-		case 0: asm volatile( " andi x0,t0,32    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 1: asm volatile( " andi x0,t0,33    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 2: asm volatile( " andi x0,t0,34    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 3: asm volatile( " andi x0,t0,35    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 4: asm volatile( " andi x0,t0,36    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 5: asm volatile( " andi x0,t0,37    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 6: asm volatile( " andi x0,t0,38    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 7: asm volatile( " andi x0,t0,39    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 8: asm volatile( " andi x0,t0,40    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 9: asm volatile( " andi x0,t0,41    \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 10: asm volatile( " andi x0,t0,42   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 11: asm volatile( " andi x0,t0,43   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 12: asm volatile( " andi x0,t0,44   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 13: asm volatile( " andi x0,t0,45   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 14: asm volatile( " andi x0,t0,46   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 15: asm volatile( " andi x0,t0,47   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-                                                                        
-        case 16: asm volatile( " andi x0,t0,48   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 17: asm volatile( " andi x0,t0,49   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 18: asm volatile( " andi x0,t0,50   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 19: asm volatile( " andi x0,t0,51   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 20: asm volatile( " andi x0,t0,52   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 21: asm volatile( " andi x0,t0,53   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 22: asm volatile( " andi x0,t0,54   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 23: asm volatile( " andi x0,t0,55   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 24: asm volatile( " andi x0,t0,56   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 25: asm volatile( " andi x0,t0,57   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 26: asm volatile( " andi x0,t0,58   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 27: asm volatile( " andi x0,t0,59   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 28: asm volatile( " andi x0,t0,60   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 29: asm volatile( " andi x0,t0,61   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 30: asm volatile( " andi x0,t0,62   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-        case 31: asm volatile( " andi x0,t0,63   \n\t" " add %[o1],t0,0   \n\t" :[o1]"=r"(temp) : ); break;
-		default: break;
-	}
-	return temp;
-}
+#define GetCounter(basereg, dstreg, start, n)    \
+              "andi x0, " dstreg ", 512+" #start "+" #n " \n\t" \
+              "sd " dstreg ", " #n "*8(" basereg ") \n\t"
+
+#define ReadCounter8(base, start) asm volatile( \
+    "mv t1, %[addr]  # set base addr \n\t"  \
+    GetCounter("t1", "t0", start, 0)  \
+    GetCounter("t1", "t0", start, 1)  \
+    GetCounter("t1", "t0", start, 2)  \
+    GetCounter("t1", "t0", start, 3)  \
+    GetCounter("t1", "t0", start, 4)  \
+    GetCounter("t1", "t0", start, 5)  \
+    GetCounter("t1", "t0", start, 6)  \
+    GetCounter("t1", "t0", start, 7)  \
+    : \
+    :[addr]"r"(base) \
+); 
+
+#define ReadCounter16(base, start) \
+    ReadCounter8(base, start) \
+    ReadCounter8(base+8, start+8) 
+
+    
 
 
 //-------------------------------------------------------------------
-#define DEFINE_CSRR(s)                     \
-    static inline unsigned long long __csrr_##s()    \
+#define DEF_CSRR(s)                     \
+    static inline unsigned long long read_csr_##s()    \
     {                                      \
         unsigned long long value;                    \
         __asm__ volatile("csrr    %0, " #s \
@@ -203,7 +195,7 @@ unsigned long long read_counter(int n){
         return value;                      \
     }
 
-DEFINE_CSRR(cycle)
-DEFINE_CSRR(instret)
+DEF_CSRR(cycle)
+DEF_CSRR(instret)
 
 #endif
