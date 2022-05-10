@@ -68,8 +68,8 @@
 
     - RESET_COUNTER
         - 将所有计数器的值设置为0
-    - unsigned long long read_counter(int n)
-        - 读取第n个计数器的值
+    - ReadCounter16 & ReadCounter8
+        - 读取16个或者8个计数器到数组中
     - DEF_CSRR(cycle) & DEF_CSRR(instret)
         - 原本riscv获取cycle和指令数的csr指令
 

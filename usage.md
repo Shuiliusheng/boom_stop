@@ -1,0 +1,9 @@
+### 使用方法
+1. 参照example中的样例
+    - define.h中定义了控制寄存器和计数器操作的宏
+    - ctrl.h则包括了具体设置控制寄存器和读计数器的函数
+    - 使用时包含ctrl.h，同时修改init_start函数，exit_func函数和exit_record函数即可
+        - init_start：用于设置一些控制寄存器
+        - exit_func：执行到最大指令数时会跳转到该函数执行
+        - exit_record：用于读取计数器的值，并且输出
+            - 需要注意：输出使用write函数完成，以避免和原本的printf冲突
