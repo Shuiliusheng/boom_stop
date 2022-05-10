@@ -9,18 +9,16 @@
 #define SetUScratch(srcreg)         "addi x0, " srcreg ", 4 \n\t" 
 #define SetURetAddr(srcreg)         "addi x0, " srcreg ", 5 \n\t"  
 #define SetMaxPriv(srcreg)          "addi x0, " srcreg ", 6 \n\t"  
-#define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" rtemp " \n\t"  
+#define SetTempReg(srcreg, rtemp)   "addi x0, " srcreg ", 7+" #rtemp " \n\t"  
 #define SetStartInsts(srcreg)       "addi x0, " srcreg ", 10 \n\t"   
 
 #define GetProcTag(dstreg)          "addi x0, " dstreg ", 1025 \n\t"  
 #define GetUScratch(dstreg)         "addi x0, " dstreg ", 1026 \n\t"  
 #define GetExitNPC(dstreg)          "addi x0, " dstreg ", 1027 \n\t"  
-#define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" rtemp " \n\t"  
+#define GetTempReg(dstreg, rtemp)   "addi x0, " dstreg ", 1028+" #rtemp " \n\t"  
 
 #define URet() asm volatile( "addi x0, x0, 128  # uret \n\t" ); 
 
-#define GetPfcounter(dstreg, pfc)   "andi x0, " dstreg ", 32+" pfc " \n\t"
-#define RESET_COUNTER asm volatile(" andi x0, t0, 64 \n\t" );
 //---------------------------------------------------------------------
 
 #define GetNPC(npc) asm volatile( \
@@ -59,18 +57,18 @@
 
 #define SetTempRegs(t1, t2, t3) asm volatile( \
     "mv t0, %[rtemp1]  \n\t"    \
-    SetTempReg("t0", "0")       \
+    SetTempReg("t0", 0)       \
     "mv t0, %[rtemp2]  \n\t"    \
-    SetTempReg("t0", "1")       \
+    SetTempReg("t0", 1)       \
     "mv t0, %[rtemp3]  \n\t"    \
-    SetTempReg("t0", "2")       \
+    SetTempReg("t0", 2)       \
     : \
     :[rtemp1]"r"(t1), [rtemp2]"r"(t2), [rtemp3]"r"(t3)  \
 );
 
 
-#define Load_necessary() asm volatile( \
-    GetTempReg("t0", "1")   \
+#define Load_Basic_Regs() asm volatile( \
+    GetTempReg("t0", 1)   \
     "ld sp,8*0(t0)  \n\t"   \
     "ld gp,8*1(t0)  \n\t"   \
     "ld tp,8*2(t0)  \n\t"   \
@@ -78,17 +76,17 @@
     "ld ra,8*4(t0)  \n\t"   \
 ); 
 
-#define Save_necessary() asm volatile( \
-    GetTempReg("t0", "1")   \
+#define Save_Basic_Regs() asm volatile( \
+    GetTempReg("t0", 1)   \
     "sd gp,8*1(t0)  \n\t"   \
     "sd tp,8*2(t0)  \n\t"   \
     "sd fp,8*3(t0)  \n\t"   \
     "sd ra,8*4(t0)  \n\t"   \
 ); 
 
-#define Save_int_regs() asm volatile( \
+#define Save_ALLIntRegs() asm volatile( \
     SetUScratch("a0")       \
-    GetTempReg("a0", "0")   \
+    GetTempReg("a0", 0)   \
     "sd x1,8*1(a0)  \n\t"   \
     "sd x2,8*2(a0)  \n\t"   \
     "sd x3,8*3(a0)  \n\t"   \
@@ -122,8 +120,8 @@
     "sd x31,8*31(a0)  \n\t"   \
 );  
 
-#define Load_int_regs() asm volatile( \
-    GetTempReg("a0", "0")   \
+#define Load_ALLIntRegs() asm volatile( \
+    GetTempReg("a0", 0)   \
     "ld x1,8*1(a0)  \n\t"   \
     "ld x2,8*2(a0)  \n\t"   \
     "ld x3,8*3(a0)  \n\t"   \
@@ -159,52 +157,36 @@
 
 
 //-------------------------------------------------------------------
-//performance counter read event
-unsigned long long read_counter(int n){
-	unsigned long long temp=0;
-	switch(n){
-		case 0: asm volatile( GetPfcounter("t0", "0")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 1: asm volatile( GetPfcounter("t0", "1")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 2: asm volatile( GetPfcounter("t0", "2")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 3: asm volatile( GetPfcounter("t0", "3")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 4: asm volatile( GetPfcounter("t0", "4")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 5: asm volatile( GetPfcounter("t0", "5")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 6: asm volatile( GetPfcounter("t0", "6")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 7: asm volatile( GetPfcounter("t0", "7")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 8: asm volatile( GetPfcounter("t0", "8")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 9: asm volatile( GetPfcounter("t0", "9")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 10: asm volatile( GetPfcounter("t0", "10")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 11: asm volatile( GetPfcounter("t0", "11")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 12: asm volatile( GetPfcounter("t0", "12")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 13: asm volatile( GetPfcounter("t0", "13")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 14: asm volatile( GetPfcounter("t0", "14")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 15: asm volatile( GetPfcounter("t0", "15")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-                                                                        
-        case 16: asm volatile( GetPfcounter("t0", "16")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 17: asm volatile( GetPfcounter("t0", "17")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 18: asm volatile( GetPfcounter("t0", "18")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 19: asm volatile( GetPfcounter("t0", "19")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 20: asm volatile( GetPfcounter("t0", "20")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 21: asm volatile( GetPfcounter("t0", "21")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 22: asm volatile( GetPfcounter("t0", "22")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 23: asm volatile( GetPfcounter("t0", "23")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 24: asm volatile( GetPfcounter("t0", "24")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 25: asm volatile( GetPfcounter("t0", "25")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 26: asm volatile( GetPfcounter("t0", "26")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 27: asm volatile( GetPfcounter("t0", "27")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 28: asm volatile( GetPfcounter("t0", "28")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 29: asm volatile( GetPfcounter("t0", "29")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 30: asm volatile( GetPfcounter("t0", "30")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-        case 31: asm volatile( GetPfcounter("t0", "31")  " mv %[out], t0   \n\t" :[out]"=r"(temp) : ); break;
-		default: break;
-	}
-	return temp;
-}
+#define RESET_COUNTER asm volatile(" andi x0, t0, 1024 \n\t" );
+
+#define GetCounter(basereg, dstreg, start, n)    \
+              "andi x0, " dstreg ", 512+" #start "+" #n " \n\t" \
+              "sd " dstreg ", " #n "*8(" basereg ") \n\t"
+
+#define ReadCounter8(base, start) asm volatile( \
+    "mv t1, %[addr]  # set base addr \n\t"  \
+    GetCounter("t1", "t0", start, 0)  \
+    GetCounter("t1", "t0", start, 1)  \
+    GetCounter("t1", "t0", start, 2)  \
+    GetCounter("t1", "t0", start, 3)  \
+    GetCounter("t1", "t0", start, 4)  \
+    GetCounter("t1", "t0", start, 5)  \
+    GetCounter("t1", "t0", start, 6)  \
+    GetCounter("t1", "t0", start, 7)  \
+    : \
+    :[addr]"r"(base) \
+); 
+
+#define ReadCounter16(base, start) \
+    ReadCounter8(base, start) \
+    ReadCounter8(base+8, start+8) 
+
+    
 
 
 //-------------------------------------------------------------------
-#define DEFINE_CSRR(s)                     \
-    static inline unsigned long long __csrr_##s()    \
+#define DEF_CSRR(s)                     \
+    static inline unsigned long long read_csr_##s()    \
     {                                      \
         unsigned long long value;                    \
         __asm__ volatile("csrr    %0, " #s \
@@ -213,7 +195,7 @@ unsigned long long read_counter(int n){
         return value;                      \
     }
 
-DEFINE_CSRR(cycle)
-DEFINE_CSRR(instret)
+DEF_CSRR(cycle)
+DEF_CSRR(instret)
 
 #endif

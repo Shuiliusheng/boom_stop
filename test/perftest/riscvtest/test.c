@@ -6,7 +6,7 @@ int arr[10240];
 int test()
 {
 	//start testing .....
-	for(int i=0;i<1000;i++){
+	for(int i=0;i<10;i++){
 		for(int c=0;c<100;c++){
 			arr[(i*c)%10240]=1;
 		}

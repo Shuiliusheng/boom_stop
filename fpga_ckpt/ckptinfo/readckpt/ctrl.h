@@ -6,14 +6,14 @@
 #include<string.h>
 #include"define.h"
 
-unsigned long long exit_values[32];
+unsigned long long exit_counters[64];
 
 unsigned long long intregs[32];
 unsigned long long necessaryRegs[1000];
 
 unsigned long long npc=0, exittime=0;
 unsigned long long procTag=0x1234567;
-unsigned long long exitFucAddr=0x10ef8;
+unsigned long long exitFucAddr=0x10f68;
 unsigned long long maxinst=1000000, warmupinst=0;
 char str_temp[300];
 
@@ -79,13 +79,12 @@ void init_start()
 
 void exit_record()
 {
-	int n=0;
-	for(n=0;n<32;n++){
-		exit_values[n]=read_counter(n);
-	}
+	ReadCounter16(&exit_counters[0], 0);
+	ReadCounter16(&exit_counters[16], 16);
+	ReadCounter16(&exit_counters[32], 32);
 
-	for(n=0;n<32;n++){
-		sprintf(str_temp, "{\"type\": \"event %2d\", \"value\": %10llu\n", n, exit_values[n]);
+	for(int n=0;n<48;n++){
+		sprintf(str_temp, "{\"type\": \"event %2d\", \"value\": %llu}\n", n, exit_counters[n]);
         write(1, str_temp, strlen(str_temp));
     }
 

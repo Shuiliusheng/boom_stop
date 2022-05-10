@@ -20,6 +20,10 @@ ${objdump} -d ${target} >read.s
 echo "replace TakeOverAddr in info.h with new value"
 temp=`grep -r "<_Z15takeoverSyscallv>:" read.s -A 10 |grep "00a56013"`
 entry=`echo $temp|awk -F ':' '{print $1}' |awk -F ' ' '{print $1}'`
+if [[ "$entry" == "" ]]; then
+    echo "cannot find TakeOverAddr!"
+    exit
+fi
 sed -i "s/#define TakeOverAddr.*/#define TakeOverAddr 0x$entry/g" info.h
 echo $temp
 grep -r "#define TakeOverAddr" info.h
@@ -31,6 +35,10 @@ echo "replace exitFucAddr in ctrl.h with new value"
 exit_fuc_tag="zero,a0,4"
 line=`grep -r exit_fuc read.s -A 10 | grep "$exit_fuc_tag"`
 exit_fuc_pc=`echo $line | awk -F ':' '{print $1}' | awk -F ' ' '{print $1}'`
+if [[ "$exit_fuc_pc" == "" ]]; then
+    echo "cannot find exitFucAddr!"
+    exit
+fi
 # 替换ctrl.h中关于入口地址的设定
 sed -i "s/unsigned long long exitFucAddr.*/unsigned long long exitFucAddr=0x$exit_fuc_pc;/g" ctrl.h
 echo $line
