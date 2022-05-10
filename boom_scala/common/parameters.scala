@@ -287,6 +287,6 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val corePAddrBits = paddrBits
   val corePgIdxBits = pgIdxBits
 
-  //Perf Counters Num
+  //Enable_PerfCounter_Support
   val subECounterNum = 4
 }

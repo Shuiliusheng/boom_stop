@@ -9,7 +9,7 @@ import freechips.rocketchip.rocket._
 import boom.common._
 import boom.util._
 
-
+//Enable_PerfCounter_Support
 class SubEventCounterIO(readWidth: Int)(implicit p: Parameters) extends BoomBundle
 {
   val event_signals  = Input(Vec(16, UInt(4.W)))
@@ -49,8 +49,6 @@ class SubEventCounter(readWidth: Int)(implicit p: Parameters) extends BoomModule
   }
 
 }
-
-
 
 
 class EventCounterIO(readWidth: Int, signalnum: Int)(implicit p: Parameters) extends BoomBundle

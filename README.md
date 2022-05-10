@@ -90,8 +90,12 @@
     - ctrl.h的start_record函数会自动在main函数之前被调用执行，因此可以在该函数对一些特殊寄存器进行设置
     - exit_fuc函数是给出的一个示例函数，用于处理达到最大指令数的信息收集和输出
 
+4. 代码的修改标注：
+    - Enable_PerfCounter_Support：计数器相关的代码修改标注
+    - Enable_MaxInsts_Support：支持maxinsts相关的代码修改标注
+    - Enable_Ckpt_Support：支持ckpt相关的代码修改标注
 
-4. 目前32个计数器对应的事件
+5. 目前32个计数器对应的事件
     - event 0,  cycles
     - event 1,  commit_insts
     - event 2,  icache_access_num
