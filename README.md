@@ -14,9 +14,7 @@
     - tag = 9 : 设置temp3寄存器, temp3 = Reg[rs1]
     - tag = 10 : 设置startInsts，用于控制程序执行到该数量的指令时，reset所有计数器
 
-
     - tag = 128 : uret功能，根据uretaddr进行跳转
-
 
     - tag = 1025 : 读取processTag, Reg[rs1] = processTag
     - tag = 1026 : 读取uscratch寄存器, Reg[rs1] = uscratch
@@ -45,18 +43,17 @@
     ```
 
 1.1 性能寄存器的读取和使用
-    - 增加了32个计数器，用于统计硬件中的事件
+    - 增加了64个计数器，用于统计硬件中的事件 (可以通过修改boom/parameter.scala中的subECounterNum进行扩展)
     - 限制1：仅限于统计progTag=0x1234567进程的事件
     - 限制2：用户自行设置需要统计的事件级别，
         - SetCounterLevel(0) : 仅统计用户级事件的数量
         - SetCounterLevel(1) : user + super
         - SetCounterLevel(3) : user + super + machine
     - 使用方法：
-        - reset: andi x0, rs1, 64
-        - 读取计数器: andi x0, rs1, 32-63  #用于读取第1-32个计数器到rs1寄存器中
+        - reset: andi x0, rs1, 1024
+        - 读取计数器: andi x0, rs1, 512-1023  #用于读取第1-n个计数器到rs1寄存器中
     - 搭配使用：
         - 程序在设置startinsts后，将在执行到该位置时，reset所有计数器
-
 
 2. 主要思路
     - 在硬件中识别特定的procTag (0x1234567)，并且仅统计该标记的进程在用户态情况下执行的指令数
@@ -76,8 +73,16 @@
     - ctrl.h的start_record函数会自动在main函数之前被调用执行，因此可以在该函数对一些特殊寄存器进行设置
     - exit_fuc函数是给出的一个示例函数，用于处理达到最大指令数的信息收集和输出
 
+4. 代码的修改标注：
+    - Enable_PerfCounter_Support：计数器相关的代码修改标注
+    - Enable_MaxInsts_Support：支持maxinsts相关的代码修改标注
 
-4. 目前32个计数器对应的事件
+5. 目录介绍
+    - boom_scala: 以SonicBOOM的cpu为例进行了相应功能的硬件支持
+    - linux_arch_riscv: 修改linux，以支持在进程切换时恢复和保存processTag
+    - riscv-pk：测试verilator生成的模拟器时所使用的pk
+
+5. 目前32个计数器对应的事件
     - event 0,  cycles
     - event 1,  commit_insts
     - event 2,  icache_access_num
