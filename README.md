@@ -45,15 +45,15 @@
     ```
 
 1.1 性能寄存器的读取和使用
-    - 增加了32个计数器，用于统计硬件中的事件
+    - 增加了64个计数器，用于统计硬件中的事件 (可以通过修改boom/parameter.scala中的subECounterNum进行扩展)
     - 限制1：仅限于统计progTag=0x1234567进程的事件
     - 限制2：用户自行设置需要统计的事件级别，
         - SetCounterLevel(0) : 仅统计用户级事件的数量
         - SetCounterLevel(1) : user + super
         - SetCounterLevel(3) : user + super + machine
     - 使用方法：
-        - reset: andi x0, rs1, 64
-        - 读取计数器: andi x0, rs1, 32-63  #用于读取第1-32个计数器到rs1寄存器中
+        - reset: andi x0, rs1, 1024
+        - 读取计数器: andi x0, rs1, 512-1023  #用于读取第1-n个计数器到rs1寄存器中
     - 搭配使用：
         - 程序在设置startinsts后，将在执行到该位置时，reset所有计数器
 
