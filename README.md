@@ -14,9 +14,7 @@
     - tag = 9 : 设置temp3寄存器, temp3 = Reg[rs1]
     - tag = 10 : 设置startInsts，用于控制程序执行到该数量的指令时，reset所有计数器
 
-
     - tag = 128 : uret功能，根据uretaddr进行跳转
-
 
     - tag = 1025 : 读取processTag, Reg[rs1] = processTag
     - tag = 1026 : 读取uscratch寄存器, Reg[rs1] = uscratch
@@ -94,6 +92,25 @@
     - Enable_PerfCounter_Support：计数器相关的代码修改标注
     - Enable_MaxInsts_Support：支持maxinsts相关的代码修改标注
     - Enable_Ckpt_Support：支持ckpt相关的代码修改标注
+
+5. 目录介绍
+    - boom_scala: 以SonicBOOM的cpu为例进行了相应功能的硬件支持
+    - linux_arch_riscv: 修改linux，以支持在进程切换时恢复和保存processTag
+    - fpga_ckpt：为了支持ckpt所需要的文件，主要从gem5_riscv_ckpt目录下获取
+        - 注意：和gem5_riscv_ckpt的主要不同：修改了临时寄存器操作的汇编指令
+        - gem5_configs：原本gem5的config目录，但是增加了一些参数，用于支持控制ckpt文件的生成
+        - gem5_create: 用于生成ckpt所修改的gem5原本src目录
+        - gem5_restore： 用于恢复ckpt所修改的gem5原本src目录
+        - build_create & build_restore：仅用于做docker的目录映射，用于映射docker中gem5的build目录
+        - podman_create.sh podman_restore.sh：用于启动docker
+        - fpga_support：主要修改了rocket/subSystem/config.scala文件，用于扩大memsize，用于支持pk的运行
+        - ckptinfo: 生成和恢复checkpoint文件的主要功能
+            - createckpt: 用于根据gem5生成的log来生成ckpt
+            - readckpt: 加载和恢复ckpt的加载器源码
+            - tempckpt：仅用于读取ckpt的一些信息
+            - test：存放一些test文件而已
+            - info：存放生成的ckpt文件
+    - riscv-pk：测试verilator生成的模拟器时所使用的pk
 
 5. 目前32个计数器对应的事件
     - event 0,  cycles
