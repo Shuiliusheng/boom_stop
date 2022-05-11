@@ -83,35 +83,66 @@
     - riscv-pk：测试verilator生成的模拟器时所使用的pk
 
 5. 目前32个计数器对应的事件
-    - event 0,  cycles
-    - event 1,  commit_insts
-    - event 2,  icache_access_num
-    - event 3,  icache_miss_num
-    - event 4,  itlb_miss_num
-    - event 5,  npc_use_f1
-    - event 6,  npc_use_f2
-    - event 7,  npc_use_f3
-    - event 8,  npc_use_core
-    - event 9,  fb_no_output
-    - event 10, fb_one_output
-    - event 11, brmask_full_cycles 
-    - event 12, rename_stall_insts
-    - event 13, dis_ldq_stall_insts
-    - event 14, dis_stq_stall_insts
-    - event 15, dis_rob_stall_insts
-    - event 16, issue_insts
-    - event 17, misspec_iss_insts
-    - event 18, dcache_access_num
-    - event 19, dcache_nack_num
-    - event 20, dcache_to_nextlevel
-    - event 21, dtlb_access_num
-    - event 22, dtlb_miss_num
-    - event 23, dtlb_ptw_num
-    - event 24, l2tlb_miss_num
-    - event 25, misaligned & pagefault
-    - event 26, mini_exception
-    - event 27, rollback_cycles
-    - event 28, commit_br_num
-    - event 29, commit_jalr_num
-    - event 30, branch_mis_num
-    - event 31, jalr_mis_num
+    0	cycles
+    1	insts
+    2	icache_access
+    3	icache_hit
+    4	icache_to_L2
+    5	itlb_access
+    6	itlb_hit
+    7	itlb_to_ptw
+    8	npc_from_f1
+    9	npc_from_f2
+    10	npc_from_f3
+    11	npc_from_core
+    12	fb_out_zero
+    13	fb_out_full
+    14	fb_out_notFull
+    15	dec_out_zero
+    16	dec_out_full
+    17	dec_out_notFull
+    18	brmask_stall
+    19	rename_stall
+    20	dis_out_zero
+    21	dis_out_full
+    22	dis_out_notFull
+    23	dis_ldq_stall
+    24	dis_stq_stall
+    25	dis_rob_stall
+    26	iss_uop_num
+    27	iss_val_zero
+    28	iss_val_full
+    29	iss_val_notFull
+    30	spec_miss_issuop
+    31	exe_is_ld
+    32	exe_is_st
+    33	dtlb_access
+    34	dtlb_miss_num
+    35	dtlb_to_ptw
+    36	dcache_access
+    37	dcache_nack_num
+    38	dcache_to_L2
+    39	exe_is_br
+    40	exe_is_jalr
+    41	exe_is_ret
+    42	exe_is_jalrcall
+    43	exe_misp_br
+    44	exe_misp_jalr
+    45	exe_misp_ret
+    46	exe_misp_jalrcall
+    47	com_is_ld
+    48	com_is_st
+    49	com_is_br
+    50	com_is_jalr
+    51	com_is_ret
+    52	com_is_jalrcall
+    53	com_misp_br
+    54	com_misp_jalr
+    55	com_misp_ret
+    56	com_misp_jalrcall
+    57	l2tlb_miss
+    58	misalign_excpt
+    59	lstd_pagefault
+    60	fetch_pagefault
+    61	mini_exception
+    62	rollback_cycles

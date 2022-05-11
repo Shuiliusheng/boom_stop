@@ -288,7 +288,10 @@ class BoomFrontendIO(implicit p: Parameters) extends BoomBundle
   val perf = Input(new FrontendPerfEvents)
 
   ////Enable_PerfCounter_Support: for icache information
+  val itlb_valid_access = Input(Bool())
+  val itlb_hit = Input(Bool())
   val icache_valid_access = Input(Bool())
+  val icache_hit = Input(Bool())
   val bpsrc_f1 = Input(Bool())
   val bpsrc_f2 = Input(Bool())
   val bpsrc_f3 = Input(Bool())
@@ -366,7 +369,8 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
   val s0_s1_use_f3_bpd_resp = WireInit(false.B)
 
   //Enable_PerfCounter_Support
-  io.cpu.icache_valid_access := icache.io.req.valid
+  io.cpu.icache_valid_access := icache.io.icache_valid_access
+  io.cpu.icache_hit := icache.io.resp.valid
   io.cpu.bpsrc_f1 := s0_valid && (s0_tsrc === BSRC_1)
   io.cpu.bpsrc_f2 := s0_valid && (s0_tsrc === BSRC_2)
   io.cpu.bpsrc_f3 := s0_valid && (s0_tsrc === BSRC_3)
@@ -445,6 +449,9 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
     s0_ghist     := f1_predicted_ghist
     s0_is_replay := false.B
   }
+
+  io.cpu.itlb_valid_access := tlb.io.req.valid
+  io.cpu.itlb_hit := s1_valid && !s1_tlb_miss
 
   // --------------------------------------------------------
   // **** ICache Response (F2) ****

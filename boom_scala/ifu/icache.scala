@@ -107,6 +107,9 @@ class ICacheBundle(val outer: ICache) extends BoomBundle()(outer.p)
   val perf = Output(new Bundle {
     val acquire = Bool()
   })
+
+  //Enable_PerfCounter_Support
+  val icache_valid_access = Output(Bool())
 }
 
 /**
@@ -169,6 +172,8 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
   val refill_one_beat = tl_out.d.fire() && edge_out.hasData(tl_out.d.bits)
 
   io.req.ready := !refill_one_beat
+
+  io.icache_valid_access := s2_valid
 
   val (_, _, d_done, refill_cnt) = edge_out.count(tl_out.d)
   val refill_done = refill_one_beat && d_done
