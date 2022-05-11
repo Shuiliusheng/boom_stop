@@ -54,7 +54,6 @@ __attribute((constructor)) void init_start()
     necessaryRegs[0]=(unsigned long long)&necessaryRegs[400];
     SetTempRegs(t1, t2, t3);
     Save_Basic_Regs();
-    SetCounterLevel("0");
 
     // printf("intput max insts: ");
     // scanf("%d", &maxinst);
