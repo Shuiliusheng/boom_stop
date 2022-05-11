@@ -70,8 +70,9 @@ void exit_record()
 	ReadCounter16(&exit_counters[0], 0);
 	ReadCounter16(&exit_counters[16], 16);
 	ReadCounter16(&exit_counters[32], 32);
+	ReadCounter16(&exit_counters[48], 48);
 
-	for(int n=0;n<48;n++){
+	for(int n=0;n<64;n++){
 		sprintf(str_temp, "event %2d: exit_counters: %llu\n", n, exit_counters[n]);
         write(1, str_temp, strlen(str_temp));
     }

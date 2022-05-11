@@ -55,6 +55,8 @@
 
 
 unsigned long long start_values[64] = {0};
+unsigned long long exit_values[64] = {0};
+
 
 __attribute((constructor)) void start_record(){
 
@@ -68,16 +70,17 @@ __attribute((constructor)) void start_record(){
 	ReadCounter16(&start_values[0], 0);
 	ReadCounter16(&start_values[16], 16);
 	ReadCounter16(&start_values[32], 32);
+	ReadCounter16(&start_values[48], 48);
 }
 
 void exit_record(){
-	unsigned long long exit_values[64] = {0};
 	int n=0;
 	ReadCounter16(&exit_values[0], 0);
 	ReadCounter16(&exit_values[16], 16);
 	ReadCounter16(&exit_values[32], 32);
+	ReadCounter16(&exit_values[48], 48);
 
-	for(n=0;n<48;n++){
+	for(n=0;n<64;n++){
 		printf("event %2d: before: %lu, after: %lu, before-after: %lu\n", n, start_values[n], exit_values[n], exit_values[n]-start_values[n]);
 	}
 }
