@@ -3,6 +3,7 @@
 
 
 //-------------------------------------------------------------------
+//设置和读取一些新增加的特殊寄存器值
 #define SetProcTag(srcreg)          "addi x0, " srcreg ", 1 \n\t"  
 #define SetExitFuncAddr(srcreg)     "addi x0, " srcreg ", 2 \n\t"  
 #define SetMaxInsts(srcreg)         "addi x0, " srcreg ", 3 \n\t"  

@@ -33,7 +33,7 @@ void exit_fuc()
 
     endcycle = read_csr_cycle();
     endinst = read_csr_instret();
-    sprintf(str_temp, "exit maxinst, cycles: %ld, inst: %ld\n", endcycle - startcycle, endinst - startinst);
+    sprintf(str_temp, "{\"type\": \"max_inst\", \"times\": %d, \"cycles\": %ld, \"inst\": %ld}\n", exittime, endcycle - startcycle, endinst - startinst);
     write(1, str_temp, strlen(str_temp));
     exit_record();
     // exit(1);
@@ -73,7 +73,7 @@ void exit_record()
 	ReadCounter16(&exit_counters[48], 48);
 
 	for(int n=0;n<64;n++){
-		sprintf(str_temp, "event %2d: exit_counters: %llu\n", n, exit_counters[n]);
+		sprintf(str_temp, "{\"type\": \"event %2d\", \"value\": %llu}\n", n, exit_counters[n]);
         write(1, str_temp, strlen(str_temp));
     }
 
