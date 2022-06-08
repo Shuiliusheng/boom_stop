@@ -1062,7 +1062,8 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
   // Delay retire/exception 1 cycle
   csr.io.retire    := RegNext(PopCount(rob.io.commit.arch_valids.asUInt))
   //Enable_MaxInsts_Support: overflow maxinst will not cause exception to kernel
-  csr.io.exception := RegNext(rob.io.com_xcpt.valid && !(overflow_insts))
+  val isOverFlowExcpt = (rob.io.com_xcpt.bits.cause === Causes.illegal_instruction.U) && overflow_insts
+  csr.io.exception := RegNext(rob.io.com_xcpt.valid && !(isOverFlowExcpt))
   // csr.io.pc used for setting EPC during exception or CSR.io.trace.
 
   csr.io.pc        := (boom.util.AlignPCToBoundary(io.ifu.get_pc(0).com_pc, icBlockBytes)
