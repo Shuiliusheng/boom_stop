@@ -1,0 +1,4 @@
+mmapend: 261993005056
+stacktop: 270582939648
+ckptprefix: ./res/bwaves
+ckptctrl: 10000 10000 0 4
