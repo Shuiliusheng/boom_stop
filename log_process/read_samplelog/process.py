@@ -11,34 +11,34 @@ from event import *
 from analysis import *
 
 #-------------------------------------------------------------------------------------
-def process_infos(startinfo, eventinfos):
+def process_infos(startinfo, eventinfos, eventsets):
 
     # 处理一些原始数据，计算一些比例，占比等参数
-    eventinfos.append(cal_fraction(eventinfos[1], eventinfos[0], "user_ipc"))
-    eventinfos.append(cal_fraction(eventinfos[2] - eventinfos[3], eventinfos[2], "icache_miss_rate"))
-    eventinfos.append(cal_fraction(eventinfos[4], eventinfos[2], "icache_to_l2_rate"))
-    eventinfos.append(cal_fraction(eventinfos[5] - eventinfos[6], eventinfos[5], "itlb_miss_rate"))
-    eventinfos.append(cal_fraction(eventinfos[7], eventinfos[5], "itlb_to_ptw_rate"))
+    eventinfos.append(cal_fraction(eventsets['insts'], eventsets['cycles'], "user_ipc"))
+    eventinfos.append(cal_fraction(eventsets['icache_access'] - eventsets['icache_hit'], eventsets['icache_access'], "icache_miss_rate"))
+    eventinfos.append(cal_fraction(eventsets['icache_to_L2'], eventsets['icache_access'], "icache_to_l2_rate"))
+    eventinfos.append(cal_fraction(eventsets['itlb_access'] - eventsets['itlb_hit'], eventsets['itlb_access'], "itlb_miss_rate"))
+    eventinfos.append(cal_fraction(eventsets['itlb_to_ptw'], eventsets['itlb_access'], "itlb_to_ptw_rate"))
 
-    eventinfos.append(cal_fraction(eventinfos[37], eventinfos[36], "dcache_nack_rate"))
-    eventinfos.append(cal_fraction(eventinfos[38], eventinfos[36], "dcache_to_l2_rate"))
-    eventinfos.append(cal_fraction(eventinfos[34], eventinfos[33], "dtlb_miss_rate"))
-    eventinfos.append(cal_fraction(eventinfos[35], eventinfos[33], "dtlb_to_ptw_rate"))
+    eventinfos.append(cal_fraction(eventsets['dcache_nack_num'], eventsets['dcache_access'], "dcache_nack_rate"))
+    eventinfos.append(cal_fraction(eventsets['dcache_to_L2'], eventsets['dcache_access'], "dcache_to_l2_rate"))
+    eventinfos.append(cal_fraction(eventsets['dtlb_miss_num'], eventsets['dtlb_access'], "dtlb_miss_rate"))
+    eventinfos.append(cal_fraction(eventsets['dtlb_to_ptw'], eventsets['dtlb_access'], "dtlb_to_ptw_rate"))
 
-    eventinfos.append(cal_fraction(eventinfos[18], eventinfos[0], "brmask_stall_cycle_rate"))
-    eventinfos.append(cal_fraction(eventinfos[25], eventinfos[0], "dis_rob_stall_cycle_rate"))
-    eventinfos.append(cal_fraction(eventinfos[30], eventinfos[26], "misspec_issuop_rate"))
-    eventinfos.append(cal_fraction(eventinfos[62], eventinfos[0], "rollback_cycles_rate"))
+    eventinfos.append(cal_fraction(eventsets['brmask_stall'], eventsets['cycles'], "brmask_stall_cycle_rate"))
+    eventinfos.append(cal_fraction(eventsets['dis_rob_stall'], eventsets['cycles'], "dis_rob_stall_cycle_rate"))
+    eventinfos.append(cal_fraction(eventsets['spec_miss_issuop'], eventsets['iss_uop_num'], "misspec_issuop_rate"))
+    eventinfos.append(cal_fraction(eventsets['rollback_cycles'], eventsets['cycles'], "rollback_cycles_rate"))
 
     eventinfos.append(cal_fraction(eventinfos[58] + eventinfos[59] + eventinfos[60] + eventinfos[61], eventinfos[1], "com_excpt_rate"))
     eventinfos.extend(cal_percentage(eventinfos[58:62]))  # exception rate
 
     eventinfos.append(cal_fraction((eventinfos[43] + eventinfos[44]) * 1000, eventinfos[1], "exe_misp_MPKI"))
     tinfos = []
-    tinfos.append(eventinfos[43])   # exe mis br
-    tinfos.append(eventinfos[45])   # exe mis ret
-    tinfos.append(eventinfos[46])   # exe mis jalrcall
-    temp = eventinfos[44] - eventinfos[45] - eventinfos[46]
+    tinfos.append(eventsets['exe_misp_br'])   # exe mis br
+    tinfos.append(eventsets['exe_misp_ret'])   # exe mis ret
+    tinfos.append(eventsets['exe_misp_jalrcall'])   # exe mis jalrcall
+    temp = eventsets['exe_misp_jalr'] - eventsets['exe_misp_ret'] - eventsets['exe_misp_jalrcall']
     temp.name = "exe_misp_jalr_else"
     tinfos.append(temp)   # exe mis else jalr
     eventinfos.extend(cal_percentage(tinfos[0:4]))  # exe misp rate
@@ -61,6 +61,9 @@ def process_infos(startinfo, eventinfos):
     eventinfos.extend(cal_percentage(eventinfos[31:33]))  # exe load store percentage
     eventinfos.extend(cal_percentage(eventinfos[47:49]))  # com load store percentage
 
+    eventinfos.append(cal_fraction(eventsets['com_misp_br'] + eventsets['com_misp_jalr'], eventsets['com_is_br'] + eventsets['com_is_jalr'], "com_mispred_rate"))
+    
+
     # 计算每个事件和ipc之间的相关性
     cor_res = []
     user_ipc = cal_fraction(eventinfos[1], eventinfos[0], "user_ipc")
@@ -73,7 +76,7 @@ def process_infos(startinfo, eventinfos):
     tempinfos = []
     tempinfos.append(eventinfos[2]-eventinfos[3])
     tempinfos.append(eventinfos[5]-eventinfos[6])
-    tempinfos.append(eventinfos[8])
+    # tempinfos.append(eventinfos[8])
     tempinfos.append(eventinfos[9])
     tempinfos.append(eventinfos[10])
     tempinfos.append(eventinfos[11])
@@ -112,9 +115,9 @@ if not os.path.exists(sys.argv[1]):
 # 读取事件名称
 eventdict = read_eventlist()
 # 从log文件中获取信息
-startinfo, eventinfos = readEventInfo(sys.argv[1], eventdict)
+startinfo, eventinfos, eventsets = readEventInfo(sys.argv[1], eventdict)
 # 计算一些相关性，同时增加一些事件
-corinfos = process_infos(startinfo, eventinfos)
+corinfos = process_infos(startinfo, eventinfos, eventsets)
 # 保存event信息到csv文件中
 saveEventInfo(startinfo, eventinfos, "h", sys.argv[1])
 # 保存相关性信息到csv文件中
