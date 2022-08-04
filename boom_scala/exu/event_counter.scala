@@ -54,7 +54,7 @@ class SubEventCounter(readWidth: Int)(implicit p: Parameters) extends BoomModule
 class EventCounterIO(readWidth: Int, signalnum: Int)(implicit p: Parameters) extends BoomBundle
 {
   val event_signals  = Input(Vec(signalnum, UInt(4.W)))
-  val read_addr = Input(Vec(readWidth, Valid(UInt(8.W))))
+  val read_addr = Input(Vec(readWidth, Valid(UInt(7.W))))
   val read_data = Output(Vec(readWidth, UInt(64.W)))
   val reset_counter = Input(Bool())
 }
@@ -80,7 +80,7 @@ class EventCounter(readWidth: Int)(implicit p: Parameters) extends BoomModule
     }
 
     for (r <- 0 until readWidth) {
-      val tag = io.read_addr(r).bits(7, 4)
+      val tag = io.read_addr(r).bits(6, 4)
       ecounters(w).io.read_addr(r).valid := io.read_addr(r).valid && (tag === w.U)
       ecounters(w).io.read_addr(r).bits  := io.read_addr(r).bits(3, 0)
     }
@@ -88,7 +88,7 @@ class EventCounter(readWidth: Int)(implicit p: Parameters) extends BoomModule
 
   for (i <- 0 until readWidth) {
     when (io.read_addr(i).valid) {
-      val tag = io.read_addr(i).bits(7, 4)
+      val tag = io.read_addr(i).bits(6, 4)
       for (w <- 0 until subECounterNum) {
         when (w.U === tag) {
           reg_read_data(i) := ecounters(w).io.read_data(i)
