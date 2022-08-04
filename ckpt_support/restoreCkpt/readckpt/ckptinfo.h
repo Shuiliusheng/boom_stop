@@ -8,16 +8,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <unistd.h>
-
-typedef struct{
-    uint64_t addr;
-    uint32_t inst;
-}JmpInfo;
-
-typedef struct{
-    int num;
-    JmpInfo *infos;
-}JmpRepInfo;
+#include "define.h"
 
 typedef struct{
     uint64_t addr;
@@ -47,36 +38,25 @@ typedef struct{
     uint64_t lastinsts;
     uint64_t startcycles;
     uint64_t startinsts;
-    uint32_t exitJmpInst;
-    JmpRepInfo *sysJmpinfos;
 }RunningInfo;
 
-void takeoverSyscall();
-uint64_t loadelf(char * progname, char *ckptinfo);
-void read_ckptinfo(char ckptinfo[]);
-
-bool setJmp(uint64_t instaddr, uint64_t target);
-void initMidJmpPlace();
-void getRangeInfo(char filename[]);
-void produceJmpInst(uint64_t npc);
-void updateJmpInst(JmpRepInfo &info);
-
-
-extern uint64_t takeOverAddr;
-extern MemRangeInfo text_seg;
 
 #define RunningInfoAddr 0x150000
 #define StoreIntRegAddr "0x150028"
 #define StoreFpRegAddr  "0x150128"
 #define OldIntRegAddr   "0x150228"
 
-#define TPoint1 0x100000
-#define TPoint2 0x1FF000
-#define MaxJALOffset 0xFFFF0
+//jmpRtemp3的二进制: addi x0, x3, 64
+#define ECall_Replace 0x04018013
+#define Cause_ExitSysCall 1
+#define Cause_ExitInst 2
 
-#define StartJump() asm volatile( \
-    "jal x0, 0x100000  \n\t"   \
-); 
+extern uint64_t takeOverAddr;
+extern MemRangeInfo text_seg;
+
+void takeoverSyscall();
+uint64_t loadelf(char * progname, char *ckptinfo);
+void read_ckptinfo(char ckptinfo[]);
 
 #define Load_necessary(BaseAddr) asm volatile( \
     "li a0, " BaseAddr " \n\t"   \
@@ -121,6 +101,7 @@ extern MemRangeInfo text_seg;
     Op "31,8*31(a0)  \n\t"   \
     Op "10,8*10(a0)  \n\t"   \
 );
+
 
 #define DEFINE_CSRR(s)                     \
     static inline uint64_t __csrr_##s()    \

@@ -1,4 +1,7 @@
 #include "ckptinfo.h"
+#include "ctrl.h"
+#include <set>
+using namespace std;
 
 typedef struct{
     uint64_t addr;
@@ -6,7 +9,6 @@ typedef struct{
 }LoadInfo;
 //    uint64_t size;
 //first load默认是8B
-
 
 typedef struct{
     uint64_t start;
@@ -18,6 +20,7 @@ typedef struct{
 void read_ckptsyscall(FILE *fp)
 {
     uint64_t filesize, allocsize, alloc_vaddr, nowplace;
+
     nowplace = ftell(fp);
     fseek(fp, 0, SEEK_END);
     filesize = ftell(fp) - nowplace;
@@ -27,6 +30,7 @@ void read_ckptsyscall(FILE *fp)
     alloc_vaddr = (uint64_t)mmap((void *)0x2000000, allocsize, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);    
     
     fread((void *)alloc_vaddr, filesize, 1, fp);
+    fclose(fp);
 
     RunningInfo *runinfo = (RunningInfo *)RunningInfoAddr;
     runinfo->syscall_info_addr = alloc_vaddr;
@@ -34,8 +38,20 @@ void read_ckptsyscall(FILE *fp)
     runinfo->totalcallnum = *((uint64_t *)alloc_vaddr);
 
     printf("--- step 5, read syscall infor and map to memory, totalcallnum: %d ---\n", runinfo->totalcallnum);
-}
 
+    //将ecall指令替换为jmp rtemp
+    SyscallInfo *sinfos = NULL;
+    uint64_t infoaddr = runinfo->syscall_info_addr + 8 + runinfo->totalcallnum*4;
+    uint32_t *sysidxs = (uint32_t *)(runinfo->syscall_info_addr + 8);
+    set<uint64_t> rep_idxs;
+    for(int i=0; i<runinfo->totalcallnum; i++) {
+        if(rep_idxs.find(sysidxs[i]) == rep_idxs.end()) {
+            sinfos = (SyscallInfo *)(infoaddr + sysidxs[i]*sizeof(SyscallInfo));
+            *((uint32_t *)sinfos->pc) = ECall_Replace;
+            rep_idxs.insert(sysidxs[i]);
+        }
+    }
+}
 
 void alloc_memrange(FILE *p)
 {
@@ -49,7 +65,7 @@ void alloc_memrange(FILE *p)
             int* arr = static_cast<int*>(mmap((void *)memrange.addr, memrange.size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, 0, 0));
             if(memrange.addr != (uint64_t)arr)
                 printf("map range: (0x%lx, 0x%lx), mapped addr: 0x%lx\n", memrange.addr, memrange.addr + memrange.size, arr);
-            // assert(memrange.addr == (uint64_t)arr);  
+            assert(memrange.addr == (uint64_t)arr);  
         }
     }
 }
@@ -71,9 +87,15 @@ void setFistLoad(FILE *p)
 
 void read_ckptinfo(char ckptinfo[])
 {
-    uint64_t npc=0, temp=0;
+    uint64_t npc, mrange_num=0, loadnum = 0, temp=0;
+    MemRangeInfo memrange, extra;
+    LoadInfo loadinfo;
     SimInfo siminfo;
     RunningInfo *runinfo = (RunningInfo *)RunningInfoAddr;
+    uint64_t cycles[2], insts[2];
+    cycles[0] = __csrr_cycle();
+    insts[0] = __csrr_instret();
+
     FILE *p=NULL;
     p = fopen(ckptinfo,"rb");
     if(p == NULL){
@@ -86,11 +108,13 @@ void read_ckptinfo(char ckptinfo[])
 
     fread(&siminfo, sizeof(siminfo), 1, p);
     uint64_t warmup = siminfo.simNum >> 32;
-    siminfo.simNum = (siminfo.simNum << 32) >> 32;
-    printf("sim slice info, start: %ld, simNum: %ld, rawLength: %ld, warmup: %ld, exitpc: 0x%lx, cause: %ld\n", siminfo.start, siminfo.simNum, siminfo.exit_cause>>2, warmup, siminfo.exitpc, siminfo.exit_cause%4);
-    runinfo->exitpc = siminfo.exitpc;
-    runinfo->exit_cause = siminfo.exit_cause % 4;
     uint64_t runLength = siminfo.exit_cause >> 2;
+    siminfo.simNum = (siminfo.simNum << 32) >> 32;
+    runinfo->exit_cause = siminfo.exit_cause % 4;
+    runinfo->exitpc = siminfo.exitpc;
+
+    printf("sim slice info, start: %ld, simNum: %ld, rawLength: %ld, warmup: %ld, exitpc: 0x%lx, cause: %ld\n", siminfo.start, siminfo.simNum, runLength, warmup, siminfo.exitpc, runinfo->exit_cause);
+    
 
     //step 1: read npc
     fread(&npc, 8, 1, p);
@@ -110,27 +134,25 @@ void read_ckptinfo(char ckptinfo[])
     
     //step5: 加载syscall的执行信息到内存中
     read_ckptsyscall(p);
-    fclose(p);
-
-    //step6: 将syscall和npc转换为jmp指令
-    printf("--- step 6, transform syscall & npc to jmp insts --- 0x%lx\n", npc);
-    getRangeInfo(ckptinfo);
-    produceJmpInst(npc);    
 
     //try to replace exit inst if syscall totalnum == 0
-    if(runinfo->totalcallnum == 0 && runinfo->exitpc != 0) {
-        printf("--- step 6.1, syscall is zero, replace exitinst with jmp inst ---\n");
-        *((uint32_t *)runinfo->exitpc) = runinfo->exitJmpInst;
+    if(runinfo->totalcallnum == 0 && runinfo->exit_cause == Cause_ExitInst) {
+        printf("--- step 5.1, syscall is zero, replace exitinst with jmp rtemp ---\n");
+        *((uint32_t *)runinfo->exitpc) = (ECall_Replace);
     }
 
-    //step7: init npc and takeover_syscall addr to temp register
-    printf("--- step 7, set jmp inst information to jmp to npc ---\n");
-    updateJmpInst(runinfo->sysJmpinfos[0]);
+    cycles[1] = __csrr_cycle();
+    insts[1] = __csrr_instret();
+    printf("load ckpt running info, cycles: %ld, insts: %ld\n", cycles[1]-cycles[0], insts[1]-insts[0]);
+
+    //step6: init npc and takeover_syscall addr to temp register
+    printf("--- step 6, init npc to rtemp(5) and takeover_syscall addr to rtemp(6) ---\n");
+    SetTempReg(npc, 2);
+    SetTempReg(takeOverAddr, 3);
 
     //step7: save registers data of boot program 
-    printf("--- step n, save registers data of loader, set testing program registers, start testing ---\n");
+    printf("--- step 789, save registers data of boot program, set testing program registers, start testing ---\n");
     Context_Operation("sd x", OldIntRegAddr);
-    Context_Operation("fld f", StoreFpRegAddr);
 
     runinfo->cycles = 0;
     runinfo->insts = 0;
@@ -139,9 +161,19 @@ void read_ckptinfo(char ckptinfo[])
     runinfo->startcycles = __csrr_cycle();
     runinfo->startinsts = __csrr_instret();
     
-
+    if(runLength != 0){
+        init_start(runLength, warmup, 1);
+    }
+    else {
+        warmup = siminfo.simNum/20;
+        runLength = siminfo.simNum - warmup;
+        init_start(runLength, warmup, 1);
+    }
+    
     //step8: set the testing program's register information
+    Context_Operation("fld f", StoreFpRegAddr);
     Context_Operation("ld x", StoreIntRegAddr);
 
-    StartJump();
+    // //step9: start the testing program
+    JmpTempReg(2);
 }
