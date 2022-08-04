@@ -1,25 +1,14 @@
 ### 使用方法
-1. 参照example中的样例
-- define.h中定义了控制寄存器和计数器操作的宏
-    - 基本不需要改动
-- ctrl.h则包括了具体设置控制寄存器和读计数器的函数
-- 使用时包含ctrl.h，同时修改init_start函数，exit_func函数和exit_record函数即可
-    - init_start：用于设置一些控制寄存器
-        - SetTempRegs(t1, t2, t3)：保存一些用于存储寄存器值的数组基址
-        - Save_Basic_Regs()：保存一些基本的寄存器值，fp, tp, ra等，其中sp被设置为necessaryRegs[400]
-        - SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst)
-            - procTag：设置当前进程的标记，只有当标记为0x1234567时，才能触发各种事件和统计计数器
-            - exitFucAddr：设置到达最大指令数时程序跳转的目标地址（exit_fuc函数的Save_ALLIntRegs第一条指令）
-            - maxinst：设置从该条指令之后，程序执行多少条用户态指令时将跳转到exitFucAddr地址
-            - warmupinst：设置从该条指令之后，程序执行多少条用户态指令重置所有计数器的值，然后再执行maxinst
-    
-    - exit_func：执行到最大指令数时会跳转到该函数执行
-        - Save_ALLIntRegs()：存储跳转到该地址时所有寄存器的值到intregs数组中。intregs数组的基址由SetTempRegs记录在临时寄存器中
-        - Load_Basic_Regs(): 加载一些Save_Basic_Regs保存的寄存器值
-        - GetNPC(npc) & SetNPC(npc)：获取跳转到exit_fuc之前的npc，并将其记录在uretaddr特殊寄存器中
-        - write(1, str_temp, strlen(str_temp))：使用write显示而不是printf，以避免和主程序的printf冲突
-        - SetCtrlReg(procTag, exitFucAddr, maxinst, warmupinst)：
-            - 如果希望回到主程序继续执行，并且执行固定的指令数，则进行设置；
-            - Load_ALLIntRegs() & URet()：恢复主程序的寄存器值，跳转回去继续执行
-            - 否则，不需要设置，并且使用exit结束执行即可
-        
+
+1. 方法1：利用example/ptrace目录中提供工具，直接执行需要采样的程序，不需要修改代码
+   - ptrace目录中是采用了ptrace的设计，将要采样的程序作为子进程，采样的设置和处理均有父进程完成，因此不需要修改源代码
+   - 使用方法：提供采样控制的文件名和可执行程序的信息即可
+  
+2. 方法2：example/self_handle/binary
+   - 该方法是将采样所有需要的内容编译成.o文件，由要采样的程序在链接时添加进去即可
+   - 通过利用c语言中__attribute((constructor))声明，使得采样设置函数initStart能够在main开始之前被执行。该函数将完成对采样参数的设置
+   - 使用方法：将.o文件链接到源程序，执行时在执行目录提供采样控制参数的文件samplectrl.txt
+
+3. 方法3：example/self_handle/include_files
+   - 该方法直接提供头文件，其中包含了所有设置采样控制的接口，同时提供了基本框架用于完成采样函数的设置
+   - 使用方法：将头文件包含到源文件中，在需要的位置调用initStart函数，同时自行设置采样参数和采样函数中的处理
