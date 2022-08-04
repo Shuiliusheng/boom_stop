@@ -41,35 +41,46 @@ trait ScalarOpConstants
   val Y = BitPat("b1")
   val N = BitPat("b0")
 
-  //-------------------------------------------------------
+  //--------------------------------------------------------
   // Extra Constants
-  // Enable_MaxInsts_Support
-  val SetEvent_ProcTag        = 1.U(12.W)
-  val SetEvent_ExitFuncAddr   = 2.U(12.W)
-  val SetEvent_ProcMaxInsts   = 3.U(12.W)
+  // Enable_Sample_Support
+  val SetUCSR_ProcTag        = 1.U(12.W)
+  val SetUCSR_SampleFuncAddr = 2.U(12.W)
+  val SetUCSR_EventSel       = 3.U(12.W)
+  val SetUCSR_MaxEventNum    = 4.U(12.W)
+  val SetUCSR_WarmupInst     = 5.U(12.W)
+  val SetUCSR_MaxPriv        = 6.U(12.W)
+  val SetUCSR_PfcEnable      = 7.U(12.W)
+  val SetUCSR_SampleHappen   = 8.U(12.W)
+  
+  val SetUCSR_Temp1          = 9.U(12.W)
+  val SetUCSR_Temp2          = 10.U(12.W)
+  val SetUCSR_Temp3          = 11.U(12.W)
+  val SetUCSR_Temp4          = 12.U(12.W)
 
-  val SetEvent_UScratch   = 4.U(12.W)
-  val SetEvent_URetAddr   = 5.U(12.W)
-  val SetEvent_MaxPriv    = 6.U(12.W)
+  val GetUCSR_ProcTag       = 33.U(12.W)
+  val GetUCSR_SampleHappen  = 34.U(12.W)
+  val GetUCSR_ExitNPC       = 35.U(12.W)
 
-  val SetEvent_Temp1      = 7.U(12.W)
-  val SetEvent_Temp2      = 8.U(12.W)
-  val SetEvent_Temp3      = 9.U(12.W)
-  val SetEvent_StartInsts = 10.U(12.W)
+  val GetUCSR_Temp1         = 36.U(12.W)
+  val GetUCSR_Temp2         = 37.U(12.W)
+  val GetUCSR_Temp3         = 38.U(12.W)
+  val GetUCSR_Temp4         = 39.U(12.W)
 
-
-  val ReadEvent_ProcTag       = 1025.U(12.W)
-  val ReadEvent_UScratch      = 1026.U(12.W)
-  val ReadEvent_ExitNPC       = 1027.U(12.W)
-
-  val ReadEvent_Temp1         = 1028.U(12.W)
-  val ReadEvent_Temp2         = 1029.U(12.W)
-  val ReadEvent_Temp3         = 1030.U(12.W)
+  //for testing
+  val GetUCSR_SampleFuncAddr  = 41.U(12.W)
+  val GetUCSR_MaxEvents     = 42.U(12.W)
+  val GetUCSR_NowEvents     = 43.U(12.W)
+  val GetUCSR_EventSel      = 44.U(12.W)
+  val GetUCSR_Maxpriv       = 45.U(12.W)
 
   //special inst fuc
-  val SetEvent_URet       = 128.U(12.W)
-  //----------------------------------------------------
-
+  val SpecialInst_URet        = 64.U(12.W)
+  val SpecialInst_RstPFC      = 127.U(12.W)
+  
+  //special exception cause for sample happen
+  val Cause_OverFlow          = 17.U 
+  //--------------------------------------------------------
 
   // Which branch predictor predicted us
   val BSRC_SZ = 2

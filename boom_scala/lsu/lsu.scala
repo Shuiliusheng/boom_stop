@@ -156,6 +156,12 @@ class LSUCoreIO(implicit p: Parameters) extends BoomBundle()(p)
     val release = Bool()
     val tlbMiss = Bool()
   })
+
+  //Enable_PerfCounter_Support: for lsu information
+  val dtlb_valid_access = Output(UInt(4.W))
+  val dtlb_miss_num     = Output(UInt(4.W))
+  val dcache_valid_access  = Output(UInt(4.W))
+  val dcache_nack_num      = Output(UInt(4.W))
 }
 
 class LSUIO(implicit p: Parameters, edge: TLEdgeOut) extends BoomBundle()(p)
@@ -253,6 +259,16 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
   io.core.perf.tlbMiss := io.ptw.req.fire()
   io.core.perf.acquire := io.dmem.perf.acquire
   io.core.perf.release := io.dmem.perf.release
+
+  val dtlb_valid_req = widthMap(w => dtlb.io.req(w).valid)
+  val dtlb_miss_req  = widthMap(w => dtlb.io.req(w).valid && (dtlb.io.resp(w).miss || !dtlb.io.req(w).ready))
+  
+  //Enable_PerfCounter_Support: for lsu information
+  io.core.dtlb_valid_access := PopCount(dtlb_valid_req.asUInt)
+  io.core.dtlb_miss_num     := PopCount(dtlb_miss_req.asUInt)
+  //Enable_PerfCounter_Support: for lsu information
+  val dcache_nack = widthMap(w => io.dmem.nack(w).valid && (io.dmem.nack(w).bits.uop.uses_ldq || io.dmem.nack(w).bits.uop.uses_stq))
+  io.core.dcache_nack_num     := PopCount(dcache_nack.asUInt)
 
 
   val clear_store     = WireInit(false.B)
@@ -750,6 +766,8 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
   io.dmem.req.valid := dmem_req.map(_.valid).reduce(_||_)
   io.dmem.req.bits  := dmem_req
   val dmem_req_fire = widthMap(w => dmem_req(w).valid && io.dmem.req.fire())
+  //Enable_PerfCounter_Support: for lsu information
+  io.core.dcache_valid_access     := PopCount(dmem_req_fire.asUInt)
 
   val s0_executing_loads = WireInit(VecInit((0 until numLdqEntries).map(x=>false.B)))
 

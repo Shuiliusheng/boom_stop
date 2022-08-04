@@ -34,8 +34,10 @@ class MicroOp(implicit p: Parameters) extends BoomBundle
   with freechips.rocketchip.rocket.constants.ScalarOpConstants
 {
 
-  //chw
-  val setEvent         = Bool()
+  //Enable_Sample_Support
+  val ucsrInst         = Bool()
+  //Enable_PerfCounter_Support
+  val readCounter      = Bool()
 
   val uopc             = UInt(UOPC_SZ.W)       // micro-op code
   val inst             = UInt(32.W)
