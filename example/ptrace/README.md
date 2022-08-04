@@ -1,0 +1,62 @@
+### RISC-V Base Perf trace
+- usage
+  ```shell
+    ./perf.riscv param_file program_path program_name program_args
+    ./perf.riscv samplectrl.txt /dir/run.riscv run.riscv arg1 arg2 ...
+  ```
+  - samplectrl.txt中的内容: 用于设置采样的参数
+    - eventsel: num, 用于选择采样的事件
+    - maxevent: num, 用于设置采样事件的间隔
+    - maxperiod: num, 用于设置采样的次数
+    - warmupinst: num, 用于设置第一次采样之前预热的指令数
+    - logname: filename, 用于设置采样结果输出的文件名
+- 基本原理
+  - 硬件上基于增加的硬件计数器和一些控制寄存器来完成采样
+    - 硬件上，当不设置sampleFuncAddr时，采样时会触发系统调用的执行，并且此时会设置sampleHappend寄存器的值
+  - 软件上利用fork, execv, ptrace来完成程序的执行，采样设置和采样信息收集
+    - 操作系统在创建新的进程时，procTag将继承父进程的值
+  - perf.riscv设计
+    - 首先利用fork和execv启动要采样的程序，并且在execv执行之前提前将进程的procTag设置为指定值（0x1234567）
+    - 父进程利用ptrace捕获采样程序的所有系统调用
+      - 遇到第一次brk系统调用时，设置采样参数：eventsel, maxevent, warmupinst
+      - 之前每次遇到系统调用时，利用GetSampleHappend(sampleHappend)判断当前系统调用是否由事件采样而引发的，如果是，
+        - 在系统调用执行之前读取当前所有寄存器的值和pc的值，并将a7（系统调用号）设置为不存在的系统调用，使得操作系统不会影响内存。同时执行采样函数，获取计数器信息
+        - 在系统调用执行之后，恢复a7和a0寄存器（系统调用设置的返回值）的内容。同时设置下一次采样的参数，并且将sampleHappend重置为0，等待下一次采样返回。
+- 文件介绍
+  - define.h: 定义了各种写入/读取/控制硬件寄存器和计数器的接口
+    - 和其它目录中的define.h基本一致，没有包括保存上下文的部分
+    - GetInformation(tag, eaddr, mevent, nevent, esel, mpriv)：获取各个硬件寄存器的内容，用于调试使用
+    - GetExitPC(exitpc): 获取采样发生时的指令地址
+    - GetSampleHappen(shap): 获取当前sampleHappen寄存器的内容，用于判断当前是否发生了采样事件
+    - SetSampleHappen(shap): 设置sampleHappen寄存器
+    - SetCounterLevel(priv): 设置计数器统计事件的级别, "0" "1" "3"
+    - SetPfcEnable(n): 设置pfcEnable寄存器，用于控制计数器工作与否
+    - SetTempReg(value, n): 设置第n个临时寄存器为value
+    - SetSampleBaseInfo(ptag, sampleFuncAddr): 设置procTag和sampleFuncAddr硬件寄存器
+      - 当使用ptrace捕获采样引发的系统调用时，需要将sampleFuncAddr设置为0
+    - SetSampleCtrlReg(maxevent, warmupinst, eventsel): 设置采样的事件选择，事件次数和预热的指令数
+    - RESET_COUNTER: 将所有计数器设置为0
+    - GetCounter(basereg, dstreg, start, n): 读取计数器并存储到指定的地址
+    - ReadCounter8(base, start): 读取从start开始的8个硬件计数器到base指定的地址中
+    - ReadCounter16(base, start): 读取从start开始的16个硬件计数器到base指定的地址中
+  - perf.h: 定义ptrace需要使用的结构体user_regs_struct和一些函数声明
+  - perf.cpp: 定义采样发生时的具体操作函数和main函数
+    - event_sample_process(uint64_t sampletimes, uint64_t exitpc)
+      - 当ptrace捕获到采样发生时，调用该函数，并提供当前采样发生的次数和采样发生时的指令地址
+      - 用户基本只需要修改该函数，来完成不同的采样时的操作，例如读取计数器等
+    - main函数
+      - 读取参数，设置maxevent, warmupinst, eventsel, maxperiods变量和logfile变量。前四个用于之后控制采样，最后一个指定log文件的文件指针
+      - 获取要要采样的程序的执行参数
+      - 启动追踪start_run_and_trace(args[2], child_args)
+  - trace.cpp：完成要采样程序的启动和追踪
+    - start_run_and_trace(char pathname[], char **args)
+      - pathname和args为linux的execv需要使用的两个参数
+      - 第一步：fork子进程，设置procTag和sampleFuncAddr，execv执行启动测试程序
+      - 第二步：开始追踪子进程的系统调用
+        - 第一次brk系统调用时，设置maxevent, warmupinst, eventsel采样控制
+        - 之后发生系统调用时，判断sampleHappen，决定该系统调用是否是由采样引发的
+  - util.cpp
+    - char **getargs(int argv, char **args): 从main函数的参数中，提取出测试程序的pathname和运行参数
+    - FILE *read_params(const char filename[], uint64_t &eventsel, uint64_t &maxevent, uint64_t &maxperiods, uint64_t &warmupinst)
+      - 读取samplectrl参数设置文件，获取各个参数，同时确定logfile指针
+  - test.cpp: 用于测试perf.riscv正确性的测试文件

@@ -1,0 +1,6 @@
+eventsel: 0
+maxevents: 200000000
+warmupinst: 0
+maxperiods: 2000
+logname: counter.log 
+
