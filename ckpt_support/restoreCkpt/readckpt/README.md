@@ -11,8 +11,8 @@
         //根据RunningInfoAddr决定RunningInfo中oldregs的位置
         #define OldIntRegAddr   "0x150228"
         //由于benchmark代码段从0x200000开始，因此定义两个中间节点，用于从加载器跳转到距离benchmark最近的地方
-        //用于实现跳转到takeOverSyscall函数入口的新指令，jmp Rtemp1, 根据临时寄存器1的值进行跳转
-        #define ECall_Replace 0x00d06013
+        //用于实现跳转到takeOverSyscall函数入口的新指令，jmp Rtemp3, 根据临时寄存器1的值进行跳转
+        #define ECall_Replace 0x04018013
         //退出指令是否为系统调用指令，暂时没有使用
         #define Cause_ExitSysCall 1 
         #define Cause_ExitInst 2
@@ -54,11 +54,9 @@
     ```
     - 内联汇编定义
     ```c
-        //三种针对临时寄存器操作的汇编指令定义: 读/写/跳转
-        #define WriteRTemp(srcreg, rtempnum) "ori x0, " srcreg ", 8+" #rtempnum " \n\t"
-        #define ReadRTemp(dstreg, rtempnum) "ori x0, " dstreg ", 4+" #rtempnum " \n\t"
-        #define JmpRTemp(num) asm volatile( "ori x0, x0, 12+" #rtempnum " \n\t" ); 
-        #define WriteTemp(num, val)
+        //针对临时寄存器操作的汇编指令定义: 写/跳转
+        #define SetTempReg(value, n)  //设置第n个临时寄存器为value
+        #define JmpTempReg(n)   //跳转到第n个临时寄存器指向的地址
         
         //恢复加载器执行环境的必要寄存器信息 sp, gp, tp, fp, 其余寄存器可以不用恢复
         #define Load_necessary(BaseAddr) asm volatile
@@ -115,8 +113,8 @@
       - 调用read_ckptsyscall，读取所有的系统调用信息
       - 调用getRangeInfo和produceJmpInst，完成对所有跳转需求的转换
       - 判断runinfo->totalcallnum == 0，如果是，则此时就需要将退出指令替换为jmp Rtemp1指令；否则交由takeOverSyscall函数在最后一次系统调用处理完后进行替换
-      - 将npc保存到临时寄存器0中，用于跳转使用：WriteTemp(0, npc)
-      - 将takeOverAddr保存到临时寄存器1中，即jmp Rtemp1指令将会跳转到takeOverAddr，完成ecall到takeOverSyscall函数的跳转：WriteTemp(1, takeOverAddr);
+      - 将npc保存到临时寄存器0中，用于跳转使用：SetTempReg(npc, 0)
+      - 将takeOverAddr保存到临时寄存器3中，即jmp Rtemp3指令将会跳转到takeOverAddr，完成ecall到takeOverSyscall函数的跳转：SetTempReg(takeOverAddr, 3);
       - 将加载器的寄存器状态保存到OldIntRegAddr中（runninginfo->oldregs）
       - 根据ckpt中记录的warmup和原本片段长度信息，设置最大指令数和预热指令数；如果ckpt没有该信息，则预热指令数为simNum的5%，最大指令数为剩余的指令数
       - 恢复ckpt起始位置处的寄存器状态
@@ -138,6 +136,6 @@
       - 判断runinfo->nowcallnum == runinfo->totalcallnum是否已经是最后一次系统调用，如果是，则将退出指令所在的地址替换为jmp RTemp1指令
         - *((uint32_t *)runinfo->exitpc) = ECall_Replace
       - 将系统调用的返回地址写入到临时寄存器0中
-        - WriteTemp(0, npc)
+        - SetTempReg(npc, 1)
       - 完成系统调用的处理，恢复benchmark的寄存器状态
-      - 使用JmpTemp(0)跳转到系统调用的下一条指令，继续执行
+      - 使用JmpTemp(1)跳转到系统调用的下一条指令，继续执行
