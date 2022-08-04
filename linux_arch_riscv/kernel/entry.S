@@ -532,7 +532,7 @@ ENTRY(__switch_to)
 	
 	/*chw*/
 	/* Save threadtag into prev->thread */
-	addi x0, s0, 1025
+	addi x0, s0, 33
 	REG_S s0, TASK_THREAD_TAG_RA(a3)
 
 	/* Restore context from next->thread */

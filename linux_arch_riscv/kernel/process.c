@@ -116,7 +116,9 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 {
 	fstate_save(src, task_pt_regs(src));
 	*dst = *src;
-	dst->thread.threadtag = 0;
+	/*chw*/
+	//get the threadtag from its parent process/thread
+	dst->thread.threadtag = src->thread.threadtag;
 	return 0;
 }
 
