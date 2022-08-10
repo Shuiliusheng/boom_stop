@@ -112,7 +112,7 @@
     "mv t0, %[value3]  # evensel \n\t"  \
     Set_EventSel("t0")       \
     "li t0, 1    \n\t"      \
-    "addi x0, t0, 12  #SetPfcEnable \n\t"  \
+    Set_PfcEnable("t0")  \
     : \
     :[value1]"r"(maxevent), [value2]"r"(warmupinst), [value3]"r"(eventsel) \
 ); 
